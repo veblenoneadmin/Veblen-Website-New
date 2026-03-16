@@ -418,6 +418,7 @@ body:hover .cursor { opacity: 1; }
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--white);
+  transition: color 0.4s;
   pointer-events: none;
   white-space: nowrap;
   will-change: top, font-size, letter-spacing;

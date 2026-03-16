@@ -150,10 +150,13 @@ window.addEventListener('scroll', () => {
     if (fixedCta && rect.top < viewH - 40 && rect.bottom > viewH - 100) ctaOverLight = true;
   });
 
+  const heroLogo = document.getElementById('hero-logo');
   if (overLight) {
     navbar.classList.add('light-mode');
+    if (heroLogo) heroLogo.style.color = 'var(--black)';
   } else {
     navbar.classList.remove('light-mode');
+    if (heroLogo) heroLogo.style.color = 'var(--white)';
   }
 
   if (fixedCta) {
