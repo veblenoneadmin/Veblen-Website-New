@@ -84,79 +84,49 @@ function initLogoAnimation() {
   const logo    = document.getElementById('hero-logo');
   const navLogo = document.querySelector('.nav-logo');
 
-  navLogo.style.opacity = '0';
+  // Hide the static nav logo — the hero logo becomes the nav logo
+  navLogo.style.display = 'none';
   logo.style.transition = 'none';
+  logo.style.pointerEvents = 'auto';
+
+  // Copy nav logo click behavior
+  logo.style.cursor = 'pointer';
+  logo.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 
   // Start & end values
   const startTop   = window.innerHeight / 2;
   const isMobile   = window.innerWidth <= 480;
-  const endTop     = isMobile ? 28 : 50;       // centre of navbar (56px mobile, 100px desktop)
   const startSize  = isMobile ? Math.min(Math.max(window.innerWidth * 0.07, 20), 32)
                               : Math.min(Math.max(window.innerWidth * 0.06, 48), 80);
-  const endSize    = isMobile ? 14 : 36;
+  const endSize    = isMobile ? 14 : Math.min(Math.max(window.innerWidth * 0.015, 16), 30);
+  // Get actual navbar height (fluid via CSS clamp)
+  const navH = document.getElementById('navbar').offsetHeight;
+  // Align logo to vertical center of navbar — offset for line-height
+  const endTop     = (navH - endSize * 1.2) / 2;
   const startSpace = 0.3;
   const endSpace   = 0.2;
-  const scrollEnd  = window.innerHeight * 0.5;
+  const scrollEnd  = window.innerHeight * 1.2;
 
-  // Smooth interpolation state
-  let currentTop   = startTop;
-  let currentSize  = startSize;
-  let currentSpace = startSpace;
-  let targetTop    = startTop;
-  let targetSize   = startSize;
-  let targetSpace  = startSpace;
-  let ticking      = false;
-
-  // Lerp factor — lower = smoother/laggier, higher = snappier
-  const lerp = 0.18;
-
-  function updateTargets() {
+  function update() {
     const scrollY = window.scrollY;
     const t = Math.min(Math.max(scrollY / scrollEnd, 0), 1);
-    // Ease-out quart for smooth deceleration
-    const ease = 1 - Math.pow(1 - t, 4);
+    // Smooth ease-out for gentle deceleration into position
+    const ease = 1 - Math.pow(1 - t, 2.5);
 
-    targetTop   = startTop + (endTop - startTop) * ease;
-    targetSize  = startSize + (endSize - startSize) * ease;
-    targetSpace = startSpace + (endSpace - startSpace) * ease;
+    const top   = startTop + (endTop - startTop) * ease;
+    const size  = startSize + (endSize - startSize) * ease;
+    const space = startSpace + (endSpace - startSpace) * ease;
 
-    // Swap to nav logo when fully docked
-    if (t >= 0.98) {
-      logo.style.opacity = '0';
-      navLogo.style.opacity = '1';
-    } else {
-      logo.style.opacity = '1';
-      navLogo.style.opacity = '0';
-    }
+    logo.style.top = top + 'px';
+    logo.style.fontSize = size + 'px';
+    logo.style.letterSpacing = space + 'em';
   }
 
-  function animate() {
-    currentTop   += (targetTop - currentTop) * lerp;
-    currentSize  += (targetSize - currentSize) * lerp;
-    currentSpace += (targetSpace - currentSpace) * lerp;
-
-    logo.style.top = currentTop + 'px';
-    logo.style.fontSize = currentSize + 'px';
-    logo.style.letterSpacing = currentSpace + 'em';
-
-    requestAnimationFrame(animate);
-  }
-
-  function onScroll() {
-    updateTargets();
-  }
-
-  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('scroll', () => requestAnimationFrame(update), { passive: true });
   // Set initial state
-  updateTargets();
-  currentTop = targetTop;
-  currentSize = targetSize;
-  currentSpace = targetSpace;
-  logo.style.top = currentTop + 'px';
-  logo.style.fontSize = currentSize + 'px';
-  logo.style.letterSpacing = currentSpace + 'em';
-  // Start continuous animation loop
-  requestAnimationFrame(animate);
+  update();
 }
 
 /* ---- NAVBAR SCROLL STATE ---- */
@@ -167,31 +137,30 @@ let lightSceneActive = false;
 window.addEventListener('scroll', () => {
   const scrollY = window.scrollY;
 
-  // Scrolled state (background blur)
-  if (scrollY > 60) {
-    navbar.classList.add('scrolled');
+  // Detect if navbar overlaps any light (cream) section
+  const lightSections = document.querySelectorAll('.scene-cream');
+  const fixedCta = document.querySelector('.fixed-cta');
+  const viewH = window.innerHeight;
+  let overLight = false;
+  let ctaOverLight = false;
+
+  lightSections.forEach(section => {
+    const rect = section.getBoundingClientRect();
+    if (rect.top < 100 && rect.bottom > 0) overLight = true;
+    if (fixedCta && rect.top < viewH - 40 && rect.bottom > viewH - 100) ctaOverLight = true;
+  });
+
+  if (overLight) {
+    navbar.classList.add('light-mode');
   } else {
-    navbar.classList.remove('scrolled');
+    navbar.classList.remove('light-mode');
   }
 
-  // Light mode when in cream scene
-  const lightScene = document.getElementById('scene-light');
-  const fixedCta = document.querySelector('.fixed-cta');
-  if (lightScene) {
-    const rect = lightScene.getBoundingClientRect();
-    const viewH = window.innerHeight;
-    if (rect.top < 80 && rect.bottom > 0) {
-      navbar.classList.add('light-mode');
+  if (fixedCta) {
+    if (ctaOverLight) {
+      fixedCta.classList.add('light-mode');
     } else {
-      navbar.classList.remove('light-mode');
-    }
-    // Toggle fixed CTA light mode when CTA overlaps the light section
-    if (fixedCta) {
-      if (rect.top < viewH - 40 && rect.bottom > viewH - 100) {
-        fixedCta.classList.add('light-mode');
-      } else {
-        fixedCta.classList.remove('light-mode');
-      }
+      fixedCta.classList.remove('light-mode');
     }
   }
 
@@ -791,24 +760,6 @@ if (openBtn && overlay) {
       ctx.stroke();
     }
     ctx.restore();
-
-    // Barrel text (rotates with outer barrel)
-    const textR = R * 0.97;
-    const fontSize = Math.max(14, R * 0.04);
-    ctx.font = `500 ${fontSize}px "DM Sans", sans-serif`;
-    ctx.fillStyle = 'rgba(255,255,255,0.10)';
-    ctx.textAlign = 'center';
-    const marks = ['50mm', 'f/1.4', '\u2022', 'VEBLEN OPTICS', '\u2022', 'ASPHERICAL', '\u2022', 'ED'];
-    marks.forEach((txt, i) => {
-      const a = (i / marks.length) * Math.PI * 2;
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(a);
-      ctx.translate(0, -textR);
-      ctx.rotate(Math.PI / 2);
-      ctx.fillText(txt, 0, 0);
-      ctx.restore();
-    });
 
     ctx.restore(); // end outer barrel rotation
 
