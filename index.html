@@ -128,25 +128,10 @@
       <div class="hero-bg-placeholder"></div>
       <div class="hero-amber-glow"></div>
 
-      <!-- Asset placeholder (skyscraper image will run over text) -->
-      <div class="asset-placeholder hero-asset-placeholder">
-        <span class="placeholder-label">[ Skyscraper asset — looking up at night ]</span>
-      </div>
-
-      <!-- Split headline text -->
-      <div class="hero-text-left">
-        <span class="hero-word">
-          <span>Own</span>
-        </span>
-      </div>
-      <div class="hero-text-right">
-        <span class="hero-word">
-          <span>the</span>
-        </span>
-        <span class="hero-word">
-          <span>Market.</span>
-        </span>
-      </div>
+      <!-- Hero headline: 3 words, each positioned individually by JS -->
+      <span class="hero-word-el" id="hw-own"><span class="hero-changing-word" id="hero-changing-word">Own</span></span>
+      <span class="hero-word-el" id="hw-the">the</span>
+      <span class="hero-word-el" id="hw-market">Market.</span>
 
       <!-- Scroll hint -->
       <div class="hero-scroll-hint">
@@ -262,7 +247,8 @@
         </div>
 
         <!-- Case study images -->
-        <div class="proof-case-grid">
+        <div class="proof-case-wrap" id="proof-case-wrap">
+        <div class="proof-case-grid" id="proof-case-grid">
           <div class="proof-case-item">
             <img src="assets/add1/FLECK.png" alt="Fleck case study" />
             <span class="proof-case-label">Fleck</span>
@@ -279,6 +265,16 @@
             <img src="assets/add1/talenport.png" alt="Talentport case study" />
             <span class="proof-case-label">Talentport</span>
           </div>
+        </div>
+        </div>
+        <!-- Mobile carousel arrows (hidden on desktop) -->
+        <div class="proof-carousel-arrows" id="proof-carousel-arrows">
+          <button class="proof-arrow proof-arrow-left" id="proof-arrow-left">
+            <svg viewBox="0 0 24 24" width="24" height="24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/></svg>
+          </button>
+          <button class="proof-arrow proof-arrow-right" id="proof-arrow-right">
+            <svg viewBox="0 0 24 24" width="24" height="24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z" fill="currentColor"/></svg>
+          </button>
         </div>
       </div>
     </section>
@@ -397,7 +393,7 @@
         they can't ignore.
       </div>
 
-      <p class="fade-up delay-3" style="font-family:var(--font-body);font-size:15px;font-weight:300;color:rgba(255,255,255,0.5);line-height:1.7;max-width:700px;text-align:center;white-space:nowrap;">
+      <p class="fade-up delay-3" style="font-family:var(--font-body);font-size:15px;font-weight:300;color:rgba(255,255,255,0.5);line-height:1.7;max-width:700px;text-align:center;">
         Book your strategy session. Zero obligation. We'll tell you exactly what's holding you back.
       </p>
 
@@ -454,6 +450,7 @@
 
   </main><!-- /scroll-wrapper -->
 
+  <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

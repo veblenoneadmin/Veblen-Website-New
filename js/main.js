@@ -2,6 +2,19 @@
    VEBLEN GROUP v2 — MAIN JAVASCRIPT
    ============================================ */
 
+/* ---- SMOOTH SCROLL (Lenis — fixes Windows wheel jumping) ---- */
+const lenis = new Lenis({
+  duration: 1.2,
+  easing: function(t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
+  touchMultiplier: 2,
+  infinite: false,
+});
+function lenisRaf(time) {
+  lenis.raf(time);
+  requestAnimationFrame(lenisRaf);
+}
+requestAnimationFrame(lenisRaf);
+
 /* ---- CUSTOM CURSOR (desktop only) ---- */
 const cursor = document.querySelector('.cursor');
 const cursorRing = document.querySelector('.cursor-ring');
@@ -66,10 +79,8 @@ setTimeout(() => {
     scrollWrapper.classList.add('visible');
     // Show hero logo
     heroLogo.style.opacity = '1';
-    // Start hero text animation
-    document.querySelectorAll('.hero-word span').forEach((el, i) => {
-      setTimeout(() => el.classList.add('revealed'), i * 150);
-    });
+    // Show hero words
+    document.querySelectorAll('.hero-word-el').forEach(el => { el.style.opacity = '1'; });
     // Show fixed CTA
     setTimeout(() => {
       document.querySelector('.fixed-cta').classList.add('visible');
@@ -92,27 +103,29 @@ function initLogoAnimation() {
   // Copy nav logo click behavior
   logo.style.cursor = 'pointer';
   logo.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    lenis.scrollTo(0);
   });
 
-  // Start & end values
-  const startTop   = window.innerHeight / 2;
-  const isMobile   = window.innerWidth <= 480;
-  const startSize  = isMobile ? Math.min(Math.max(window.innerWidth * 0.07, 20), 32)
-                              : Math.min(Math.max(window.innerWidth * 0.06, 48), 80);
-  const endSize    = isMobile ? 14 : Math.min(Math.max(window.innerWidth * 0.015, 16), 30);
-  // Get actual navbar height (fluid via CSS clamp)
-  const navH = document.getElementById('navbar').offsetHeight;
-  // Align logo to vertical center of navbar — offset for line-height
-  const endTop     = (navH - endSize * 1.2) / 2;
+  // Start & end values — recalculated on resize
+  let startTop, startSize, endSize, endTop, scrollEnd;
   const startSpace = 0.3;
   const endSpace   = 0.2;
-  const scrollEnd  = window.innerHeight * 1.2;
+
+  function calcLogoLayout() {
+    startTop = window.innerHeight / 2;
+    const isMobile = window.innerWidth <= 480;
+    startSize = isMobile ? Math.min(Math.max(window.innerWidth * 0.07, 20), 32)
+                         : Math.min(Math.max(window.innerWidth * 0.06, 48), 80);
+    endSize = isMobile ? 14 : Math.min(Math.max(window.innerWidth * 0.015, 16), 30);
+    const navH = document.getElementById('navbar').offsetHeight;
+    endTop = (navH - endSize * 1.2) / 2;
+    scrollEnd = window.innerHeight * 1.2;
+  }
+  calcLogoLayout();
 
   function update() {
     const scrollY = window.scrollY;
     const t = Math.min(Math.max(scrollY / scrollEnd, 0), 1);
-    // Smooth ease-out for gentle deceleration into position
     const ease = 1 - Math.pow(1 - t, 2.5);
 
     const top   = startTop + (endTop - startTop) * ease;
@@ -124,8 +137,8 @@ function initLogoAnimation() {
     logo.style.letterSpacing = space + 'em';
   }
 
+  window.addEventListener('resize', () => { calcLogoLayout(); update(); });
   window.addEventListener('scroll', () => requestAnimationFrame(update), { passive: true });
-  // Set initial state
   update();
 }
 
@@ -170,37 +183,304 @@ window.addEventListener('scroll', () => {
   lastScrollY = scrollY;
 }, { passive: true });
 
-/* ---- HERO TEXT ZOOM-OUT + FADE ON SCROLL ---- */
-(function initHeroTextZoom() {
-  const heroLeft = document.querySelector('.hero-text-left');
-  const heroRight = document.querySelector('.hero-text-right');
+/* ---- HERO TEXT MERGE + WORD TRANSITIONS ON SCROLL ---- */
+(function initHeroSequence() {
+  const elOwn = document.getElementById('hw-own');
+  const elThe = document.getElementById('hw-the');
+  const elMarket = document.getElementById('hw-market');
+  const changingWord = document.getElementById('hero-changing-word');
   const heroHint = document.querySelector('.hero-scroll-hint');
   const heroScene = document.getElementById('scene-hero');
-  if (!heroLeft || !heroRight || !heroScene) return;
+  const aboutEl = document.getElementById('scene-statement');
+  if (!elOwn || !elThe || !elMarket || !heroScene) return;
 
-  // Set transform-origin so text scales from its own center
-  heroLeft.style.willChange = 'transform, opacity';
-  heroRight.style.willChange = 'transform, opacity';
+  // Make them fixed so they stay on screen during scroll
+  [elOwn, elThe, elMarket].forEach(el => { el.style.position = 'fixed'; });
 
-  function onScroll() {
-    const scrollY = window.scrollY;
-    const sceneH = heroScene.offsetHeight;
-    // Start effect early, complete by 60% of hero height
-    const progress = Math.min(Math.max(scrollY / (sceneH * 0.55), 0), 1);
+  const words = ['Own', 'Run', 'Lead', 'Take'];
+  let currentWordIndex = 0;
+  let aboutDone = false;
 
-    // Scale from 1 → 2.5 and opacity from 1 → 0
-    const scale = 1 + progress * 1.5;
-    const opacity = 1 - progress;
+  // Layout values — recalculated on resize
+  let vh, vw, ownW, ownH, theW, theH, mktW, mktH;
+  let ownStartX, ownStartY, theStartX, theStartY, mktStartX, mktStartY;
+  let ownEndX, ownEndY, theEndX, theEndY, mktEndX, mktEndY;
+  let mergeScrollEnd;
 
-    heroLeft.style.transform = `translateY(-50%) scale(${scale})`;
-    heroLeft.style.opacity = opacity;
-    heroRight.style.transform = `scale(${scale})`;
-    heroRight.style.opacity = opacity;
-    if (heroHint) heroHint.style.opacity = opacity;
+  function calcLayout() {
+    vh = window.innerHeight;
+    vw = window.innerWidth;
+    const isMobile = vw <= 480;
+    const isTablet = vw <= 900;
+
+    // Measure word sizes
+    ownW = elOwn.offsetWidth;
+    ownH = elOwn.offsetHeight;
+    theW = elThe.offsetWidth;
+    theH = elThe.offsetHeight;
+    mktW = elMarket.offsetWidth;
+    mktH = elMarket.offsetHeight;
+
+    // START positions — adjusted for mobile
+    const edgePad = isMobile ? 0.04 : 0.05;
+    ownStartX = vw * edgePad;
+    ownStartY = vh * (isMobile ? 0.22 : 0.28) - ownH / 2;
+
+    // "the" + "Market." → bottom-right
+    // On mobile, clamp so they don't go off-screen
+    theStartX = Math.max(vw * 0.02, vw * (1 - edgePad) - theW);
+    theStartY = vh * (isMobile ? 0.75 : 0.82) - theH - mktH;
+    mktStartX = Math.max(vw * 0.02, vw * (1 - edgePad) - mktW);
+    mktStartY = vh * (isMobile ? 0.75 : 0.82) - mktH;
+
+    // END positions (merged centered)
+    const gap = isMobile ? vw * 0.015 : vw * 0.02;
+    const line1W = ownW + gap + theW;
+    const line2W = mktW;
+    const blockW = Math.max(line1W, line2W);
+    const lineH = ownH;
+    const blockH = lineH * 2.1;
+
+    // On mobile, left-align with padding instead of centering if block is wider than screen
+    let blockLeft;
+    if (blockW > vw * 0.92) {
+      blockLeft = vw * 0.04; // left-align with padding
+    } else {
+      blockLeft = (vw - blockW) / 2;
+    }
+    const blockTop = (vh - blockH) / 2;
+
+    ownEndX = blockLeft;
+    ownEndY = blockTop;
+    theEndX = blockLeft + ownW + gap;
+    theEndY = blockTop;
+    mktEndX = blockLeft;
+    mktEndY = blockTop + lineH * 1.1;
+
+    mergeScrollEnd = vh * 1.2;
   }
 
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
+  calcLayout();
+  window.addEventListener('resize', () => { calcLayout(); update(); });
+
+  // Set initial positions
+  elOwn.style.left = ownStartX + 'px';
+  elOwn.style.top = ownStartY + 'px';
+  elThe.style.left = theStartX + 'px';
+  elThe.style.top = theStartY + 'px';
+  elMarket.style.left = mktStartX + 'px';
+  elMarket.style.top = mktStartY + 'px';
+
+  function update() {
+    const scrollY = window.scrollY;
+    const sceneH = heroScene.offsetHeight - vh;
+
+    // Fade scroll hint
+    if (heroHint) {
+      // Fade out during first half of merge
+      const hintFade = Math.max(0, 1 - scrollY / (mergeScrollEnd * 0.5));
+      heroHint.style.opacity = String(hintFade);
+      heroHint.style.display = hintFade <= 0 ? 'none' : '';
+    }
+
+    // === MERGE: each word moves from start to end ===
+    // Same ease-out as VEBLEN logo
+    const mergeRaw = Math.min(Math.max(scrollY / mergeScrollEnd, 0), 1);
+    const ease = 1 - Math.pow(1 - mergeRaw, 2.5);
+
+    // Interpolate each word's position
+    const ox = ownStartX + (ownEndX - ownStartX) * ease;
+    const oy = ownStartY + (ownEndY - ownStartY) * ease;
+    const tx = theStartX + (theEndX - theStartX) * ease;
+    const ty = theStartY + (theEndY - theStartY) * ease;
+    const mx = mktStartX + (mktEndX - mktStartX) * ease;
+    const my = mktStartY + (mktEndY - mktStartY) * ease;
+
+    elOwn.style.left = ox + 'px';
+    elOwn.style.top = oy + 'px';
+    elThe.style.left = tx + 'px';
+    elThe.style.top = ty + 'px';
+    elMarket.style.left = mx + 'px';
+    elMarket.style.top = my + 'px';
+
+    // Motion blur — subtle directional blur while moving, fades as merge completes
+    const speed = mergeRaw < 1 ? (1 - ease) * 4 : 0; // stronger at start, fades out
+    const blur = `0 0 ${speed}px rgba(255,255,255,0.3)`;
+    const noBlur = 'none';
+    const shadow = speed > 0.2 ? blur : noBlur;
+    elOwn.style.textShadow = shadow;
+    elThe.style.textShadow = shadow;
+    elMarket.style.textShadow = shadow;
+
+    // === WORD CHANGES — only after merge is fully complete ===
+    const t = Math.min(Math.max(scrollY / sceneH, 0), 1);
+    const mergeComplete = mergeScrollEnd / sceneH; // t value when merge finishes
+
+    let wordIndex;
+    if (t < mergeComplete + 0.05) wordIndex = 0;        // Own — stays until merge done + buffer
+    else if (t < mergeComplete + 0.20) wordIndex = 1;    // Run
+    else if (t < mergeComplete + 0.35) wordIndex = 2;    // Lead
+    else wordIndex = 3;                                    // Take
+
+    if (wordIndex !== currentWordIndex) {
+      currentWordIndex = wordIndex;
+      changingWord.style.transition = 'none';
+      changingWord.style.transform = 'scaleY(0)';
+      changingWord.textContent = words[wordIndex];
+      changingWord.offsetHeight;
+      changingWord.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+      changingWord.style.transform = 'scaleY(1)';
+    }
+
+    // Zoom-through: words spread apart, About zooms in from center
+    const isMobileView = window.innerWidth <= 900;
+    const aboutReached = scrollY >= heroScene.offsetHeight - vh;
+
+    if (isMobileView) {
+      // MOBILE: no fixed About zoom — just spread words and let About scroll in naturally
+      if (t > 0.9) {
+        const zoomT = (t - 0.9) / 0.1;
+        const zoomEase = 1 - Math.pow(1 - zoomT, 2);
+        const scale = 1 + zoomEase * 3;
+        const opacity = Math.max(0, 1 - zoomEase * 1.5);
+        const spread = zoomEase * 40;
+
+        elOwn.style.transform = `scale(${scale}) translateX(${-spread}vw)`;
+        elOwn.style.opacity = String(opacity);
+        elThe.style.transform = `scale(${scale}) translateX(${-spread * 0.6}vw)`;
+        elThe.style.opacity = String(opacity);
+        elMarket.style.transform = `scale(${scale}) translateX(${spread}vw)`;
+        elMarket.style.opacity = String(opacity);
+      } else {
+        [elOwn, elThe, elMarket].forEach(el => {
+          el.style.transform = 'scale(1)';
+          el.style.opacity = '1';
+        });
+      }
+      if (heroScene.getBoundingClientRect().bottom < 0) {
+        [elOwn, elThe, elMarket].forEach(el => { el.style.opacity = '0'; });
+      }
+    } else {
+      // DESKTOP: full zoom-through with fixed About
+      if (aboutReached) {
+        [elOwn, elThe, elMarket].forEach(el => { el.style.opacity = '0'; });
+        aboutEl.style.position = '';
+        aboutEl.style.top = '';
+        aboutEl.style.left = '';
+        aboutEl.style.width = '';
+        aboutEl.style.height = '';
+        aboutEl.style.zIndex = '';
+        aboutEl.style.transform = '';
+        aboutEl.style.opacity = '';
+        aboutEl.style.transformOrigin = '';
+        aboutEl.style.overflow = '';
+      } else if (t > 0.9) {
+        const zoomT = (t - 0.9) / 0.1;
+        const zoomEase = 1 - Math.pow(1 - zoomT, 2);
+        const scale = 1 + zoomEase * 3;
+        const opacity = Math.max(0, 1 - zoomEase * 1.5);
+        const spread = zoomEase * 40;
+
+        elOwn.style.transform = `scale(${scale}) translateX(${-spread}vw)`;
+        elOwn.style.opacity = String(opacity);
+        elThe.style.transform = `scale(${scale}) translateX(${-spread * 0.6}vw)`;
+        elThe.style.opacity = String(opacity);
+        elMarket.style.transform = `scale(${scale}) translateX(${spread}vw)`;
+        elMarket.style.opacity = String(opacity);
+
+        aboutEl.style.position = 'fixed';
+        aboutEl.style.top = '0';
+        aboutEl.style.left = '0';
+        aboutEl.style.width = '100%';
+        aboutEl.style.height = '100vh';
+        aboutEl.style.zIndex = '5';
+        aboutEl.style.transformOrigin = 'center center';
+        aboutEl.style.transform = `scale(${zoomEase})`;
+        aboutEl.style.opacity = String(zoomEase);
+        aboutEl.style.overflow = 'hidden';
+      } else if (t >= 1) {
+        [elOwn, elThe, elMarket].forEach(el => { el.style.opacity = '0'; });
+        aboutEl.style.position = 'fixed';
+        aboutEl.style.top = '0';
+        aboutEl.style.left = '0';
+        aboutEl.style.width = '100%';
+        aboutEl.style.height = '100vh';
+        aboutEl.style.zIndex = '5';
+        aboutEl.style.transform = 'scale(1)';
+        aboutEl.style.opacity = '1';
+        aboutEl.style.overflow = 'hidden';
+      } else {
+        [elOwn, elThe, elMarket].forEach(el => {
+          el.style.transform = 'scale(1)';
+          el.style.opacity = '1';
+        });
+        aboutEl.style.position = 'fixed';
+        aboutEl.style.top = '0';
+        aboutEl.style.left = '0';
+        aboutEl.style.width = '100%';
+        aboutEl.style.height = '100vh';
+        aboutEl.style.zIndex = '5';
+        aboutEl.style.transform = 'scale(0)';
+        aboutEl.style.opacity = '0';
+        aboutEl.style.overflow = 'hidden';
+      }
+    }
+  }
+
+  window.addEventListener('scroll', () => requestAnimationFrame(update), { passive: true });
+  update();
+})();
+
+/* ---- MOBILE CASE STUDY CAROUSEL (infinite loop) ---- */
+(function initProofCarousel() {
+  if (window.innerWidth > 480) return;
+
+  const grid = document.getElementById('proof-case-grid');
+  const leftBtn = document.getElementById('proof-arrow-left');
+  const rightBtn = document.getElementById('proof-arrow-right');
+  if (!grid || !leftBtn || !rightBtn) return;
+
+  const items = Array.from(grid.querySelectorAll('.proof-case-item'));
+  const count = items.length;
+  if (count === 0) return;
+
+  // Clone first and last for seamless looping
+  const firstClone = items[0].cloneNode(true);
+  const lastClone = items[count - 1].cloneNode(true);
+  grid.appendChild(firstClone);
+  grid.insertBefore(lastClone, items[0]);
+
+  // Now order is: [lastClone, item0, item1, item2, item3, firstClone]
+  // Start at index 1 (real first card)
+  let index = 1;
+  let animating = false;
+  grid.style.transform = `translateX(-${index * 100}%)`;
+
+  function slideTo(newIndex) {
+    if (animating) return;
+    animating = true;
+    index = newIndex;
+    grid.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+    grid.style.transform = `translateX(-${index * 100}%)`;
+
+    grid.addEventListener('transitionend', function handler() {
+      grid.removeEventListener('transitionend', handler);
+      // If we landed on a clone, jump to the real card instantly
+      if (index === 0) {
+        grid.style.transition = 'none';
+        index = count;
+        grid.style.transform = `translateX(-${index * 100}%)`;
+      } else if (index === count + 1) {
+        grid.style.transition = 'none';
+        index = 1;
+        grid.style.transform = `translateX(-${index * 100}%)`;
+      }
+      animating = false;
+    });
+  }
+
+  rightBtn.addEventListener('click', () => slideTo(index + 1));
+  leftBtn.addEventListener('click', () => slideTo(index - 1));
 })();
 
 /* ---- MOBILE MENU TOGGLE ---- */
@@ -237,7 +517,16 @@ document.querySelectorAll('[data-scroll-to]').forEach(link => {
     e.preventDefault();
     const target = document.getElementById(link.dataset.scrollTo);
     if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Release any fixed-position sections before scrolling
+      target.style.position = '';
+      target.style.top = '';
+      target.style.left = '';
+      target.style.width = '';
+      target.style.zIndex = '';
+      target.style.transform = '';
+      target.style.opacity = '';
+      target.style.transformOrigin = '';
+      lenis.scrollTo(target, { offset: 0 });
     }
   });
 });
