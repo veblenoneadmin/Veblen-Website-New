@@ -81,6 +81,12 @@ body::after {
 }
 body:hover .cursor { opacity: 1; }
 
+/* Hide custom cursor on touch / mobile devices */
+@media (pointer: coarse), (max-width: 768px) {
+  body { cursor: auto; }
+  .cursor, .cursor-ring { display: none !important; }
+}
+
 /* ---- FIXED BOTTOM CTA ---- */
 .fixed-cta {
   position: fixed;
@@ -410,7 +416,7 @@ body:hover .cursor { opacity: 1; }
   transform: translateX(-50%);
   z-index: 8500;
   font-family: var(--font-display);
-  font-size: clamp(20px, 2.5vw, 36px);
+  font-size: clamp(48px, 6vw, 80px);
   font-weight: 800;
   letter-spacing: 0.3em;
   text-transform: uppercase;
@@ -418,6 +424,9 @@ body:hover .cursor { opacity: 1; }
   pointer-events: none;
   white-space: nowrap;
   will-change: top, font-size, letter-spacing;
+}
+@media (max-width: 480px) {
+  #hero-logo { font-size: clamp(20px, 7vw, 32px); }
 }
 
 /* ---- INTRO SCENE (Scene 0) ---- */
@@ -1118,14 +1127,7 @@ body:hover .cursor { opacity: 1; }
 .tier.revealed { opacity: 1; transform: translateY(0); }
 .tier:nth-child(2) { transition-delay: 0.15s; }
 .tier:nth-child(3) { transition-delay: 0.3s; }
-.tier:hover {
-  background: rgba(201,146,42,0.05);
-  border-color: rgba(201,146,42,0.2);
-  box-shadow:
-    inset 0 1px 0 0 rgba(201,146,42,0.15),
-    0 8px 40px rgba(201,146,42,0.08),
-    0 0 0 1px rgba(201,146,42,0.05);
-}
+/* hover styles moved below .tier.featured */
 
 .tier-number {
   font-family: var(--font-display);
@@ -1174,20 +1176,33 @@ body:hover .cursor { opacity: 1; }
   color: var(--amber);
 }
 .tier.featured {
-  background: linear-gradient(135deg, var(--amber), var(--amber-light));
-  border-color: rgba(229,176,74,0.5);
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-highlight),
+    0 8px 32px rgba(0,0,0,0.3);
+}
+.tier.featured .tier-number { color: var(--amber); }
+.tier.featured .tier-name { color: var(--white); }
+.tier.featured .tier-desc { color: var(--white-dim); }
+.tier.featured .tier-features li { color: rgba(255,255,255,0.5); }
+.tier.featured .tier-features li::before { color: var(--amber); }
+
+/* All tiers: amber highlight on hover */
+.tier:hover {
+  background: linear-gradient(135deg, var(--amber), var(--amber-light)) !important;
+  border-color: rgba(229,176,74,0.5) !important;
   box-shadow:
     inset 0 1px 0 0 rgba(255,255,255,0.25),
-    0 12px 40px rgba(201,146,42,0.25);
+    0 12px 40px rgba(201,146,42,0.25) !important;
 }
-.tier.featured .tier-number,
-.tier.featured .tier-name,
-.tier.featured .tier-desc,
-.tier.featured .tier-features li,
-.tier.featured .tier-features li::before {
+.tier:hover .tier-number,
+.tier:hover .tier-name,
+.tier:hover .tier-desc,
+.tier:hover .tier-features li,
+.tier:hover .tier-features li::before {
   color: var(--black);
 }
-.tier.featured:hover { background: var(--amber-light); }
 
 /* ---- SCENE 7 — WHO WE SERVE ---- */
 #scene-who {

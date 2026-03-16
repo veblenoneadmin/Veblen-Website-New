@@ -2,43 +2,46 @@
    VEBLEN GROUP v2 — MAIN JAVASCRIPT
    ============================================ */
 
-/* ---- CUSTOM CURSOR ---- */
+/* ---- CUSTOM CURSOR (desktop only) ---- */
 const cursor = document.querySelector('.cursor');
 const cursorRing = document.querySelector('.cursor-ring');
+const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
 let mouseX = 0, mouseY = 0;
 let ringX = 0, ringY = 0;
 
-document.addEventListener('mousemove', e => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-  cursor.style.left = mouseX + 'px';
-  cursor.style.top  = mouseY + 'px';
-});
-
-(function animateRing() {
-  ringX += (mouseX - ringX) * 0.12;
-  ringY += (mouseY - ringY) * 0.12;
-  cursorRing.style.left = ringX + 'px';
-  cursorRing.style.top  = ringY + 'px';
-  requestAnimationFrame(animateRing);
-})();
-
-document.querySelectorAll('a, button, .tier, .who-item').forEach(el => {
-  el.addEventListener('mouseenter', () => {
-    cursor.style.width = '14px';
-    cursor.style.height = '14px';
-    cursorRing.style.width = '56px';
-    cursorRing.style.height = '56px';
-    cursorRing.style.borderColor = 'rgba(201,146,42,0.8)';
+if (!isTouchDevice) {
+  document.addEventListener('mousemove', e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    cursor.style.left = mouseX + 'px';
+    cursor.style.top  = mouseY + 'px';
   });
-  el.addEventListener('mouseleave', () => {
-    cursor.style.width = '8px';
-    cursor.style.height = '8px';
-    cursorRing.style.width = '36px';
-    cursorRing.style.height = '36px';
-    cursorRing.style.borderColor = 'rgba(201,146,42,0.5)';
+
+  (function animateRing() {
+    ringX += (mouseX - ringX) * 0.12;
+    ringY += (mouseY - ringY) * 0.12;
+    cursorRing.style.left = ringX + 'px';
+    cursorRing.style.top  = ringY + 'px';
+    requestAnimationFrame(animateRing);
+  })();
+
+  document.querySelectorAll('a, button, .tier, .who-item').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.style.width = '14px';
+      cursor.style.height = '14px';
+      cursorRing.style.width = '56px';
+      cursorRing.style.height = '56px';
+      cursorRing.style.borderColor = 'rgba(201,146,42,0.8)';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.style.width = '8px';
+      cursor.style.height = '8px';
+      cursorRing.style.width = '36px';
+      cursorRing.style.height = '36px';
+      cursorRing.style.borderColor = 'rgba(201,146,42,0.5)';
+    });
   });
-});
+}
 
 /* ---- INTRO SEQUENCE ---- */
 const introScene   = document.getElementById('intro-scene');
@@ -88,7 +91,8 @@ function initLogoAnimation() {
   const startTop   = window.innerHeight / 2;
   const isMobile   = window.innerWidth <= 480;
   const endTop     = isMobile ? 28 : 50;       // centre of navbar (56px mobile, 100px desktop)
-  const startSize  = Math.min(Math.max(window.innerWidth * 0.025, 18), 36);
+  const startSize  = isMobile ? Math.min(Math.max(window.innerWidth * 0.07, 20), 32)
+                              : Math.min(Math.max(window.innerWidth * 0.06, 48), 80);
   const endSize    = isMobile ? 14 : 36;
   const startSpace = 0.3;
   const endSpace   = 0.2;
