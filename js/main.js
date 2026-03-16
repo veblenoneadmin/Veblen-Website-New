@@ -334,7 +334,6 @@ window.addEventListener('scroll', () => {
 
     // Zoom-through: words spread apart, About zooms in from center
     const isMobileView = window.innerWidth <= 900;
-    const aboutReached = scrollY >= heroScene.offsetHeight - vh;
 
     if (isMobileView) {
       // MOBILE: no fixed About zoom — just spread words and let About scroll in naturally
@@ -362,7 +361,11 @@ window.addEventListener('scroll', () => {
       }
     } else {
       // DESKTOP: full zoom-through with fixed About
-      if (aboutReached) {
+      // Release About from fixed only when scroll reaches its natural document position
+      const aboutRelease = scrollY >= heroScene.offsetHeight;
+
+      if (aboutRelease) {
+        // About is now naturally at the top of the viewport — release to normal flow
         [elOwn, elThe, elMarket].forEach(el => { el.style.opacity = '0'; });
         aboutEl.style.position = '';
         aboutEl.style.top = '';
@@ -375,7 +378,7 @@ window.addEventListener('scroll', () => {
         aboutEl.style.transformOrigin = '';
         aboutEl.style.overflow = '';
       } else if (t > 0.9) {
-        const zoomT = (t - 0.9) / 0.1;
+        const zoomT = Math.min((t - 0.9) / 0.1, 1);
         const zoomEase = 1 - Math.pow(1 - zoomT, 2);
         const scale = 1 + zoomEase * 3;
         const opacity = Math.max(0, 1 - zoomEase * 1.5);
@@ -397,17 +400,6 @@ window.addEventListener('scroll', () => {
         aboutEl.style.transformOrigin = 'center center';
         aboutEl.style.transform = `scale(${zoomEase})`;
         aboutEl.style.opacity = String(zoomEase);
-        aboutEl.style.overflow = 'hidden';
-      } else if (t >= 1) {
-        [elOwn, elThe, elMarket].forEach(el => { el.style.opacity = '0'; });
-        aboutEl.style.position = 'fixed';
-        aboutEl.style.top = '0';
-        aboutEl.style.left = '0';
-        aboutEl.style.width = '100%';
-        aboutEl.style.height = '100vh';
-        aboutEl.style.zIndex = '5';
-        aboutEl.style.transform = 'scale(1)';
-        aboutEl.style.opacity = '1';
         aboutEl.style.overflow = 'hidden';
       } else {
         [elOwn, elThe, elMarket].forEach(el => {
