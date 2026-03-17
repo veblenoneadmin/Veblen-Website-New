@@ -11,6 +11,11 @@
 </head>
 <body>
 
+  <!-- BACKGROUND AUDIO -->
+  <audio id="bg-audio" loop preload="auto">
+    <source src="assets/audio/rvstudio_the-ambient_main.wav" type="audio/wav">
+  </audio>
+
   <!-- CUSTOM CURSOR -->
   <div class="cursor"></div>
   <div class="cursor-ring"></div>
@@ -115,6 +120,17 @@
   <div id="hero-logo">VEBLEN</div>
 
   <!-- ============================================
+       AMBER DOOR SYSTEM (debris → frame → solid → opens)
+       ============================================ -->
+  <canvas id="debris-canvas"></canvas>
+  <div id="amber-door">
+    <div class="amber-door-frame">
+      <div class="amber-door-surface"></div>
+      <div class="amber-door-knob"></div>
+    </div>
+  </div>
+
+  <!-- ============================================
        MAIN SCROLL CONTENT
        ============================================ -->
   <main id="scroll-wrapper">
@@ -141,20 +157,25 @@
     </section>
 
     <!-- ==========================================
-         SCENE 2 — STATEMENT
-         Single bold italic statement
+         SCENE — DOOR PORTAL (zoom through door into About)
          ========================================== -->
-    <section id="scene-statement" class="scene scene-dark">
+    <section id="scene-door-portal">
+      <div class="door-portal-spacer"></div>
+    </section>
+
+    <!-- ==========================================
+         SCENE — ABOUT PAGE (white background, black text)
+         ========================================== -->
+    <section id="scene-statement" class="scene scene-about">
       <div class="statement-inner">
         <div class="statement-rule"></div>
         <div class="statement-eyebrow">Veblen Group</div>
         <div class="statement-text">
-          <span class="statement-line">Your business has a ceiling.</span>
-          <span class="statement-line">We remove it.</span>
+          <span class="statement-line">Your business has a <span style="color:var(--amber)">ceiling.</span></span>
+          <span class="statement-line">We <span style="color:var(--amber)">remove</span> it.</span>
         </div>
         <p class="statement-sub">
-          We build the systems, content, and strategy that turns your trade business
-          into the name everyone knows — and the one they can't ignore.
+          We build the systems, content, and strategy that turns your trade business into the name everyone knows — and the one they can't ignore.
         </p>
       </div>
     </section>

@@ -2,6 +2,36 @@
    VEBLEN GROUP v2 — MAIN JAVASCRIPT
    ============================================ */
 
+/* ---- ALWAYS START FROM TOP ON REFRESH ---- */
+window.scrollTo(0, 0);
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+/* ---- BACKGROUND AUDIO ---- */
+(function initBgAudio() {
+  const audio = document.getElementById('bg-audio');
+  if (!audio) return;
+  audio.volume = 0.4;
+  let started = false;
+
+  function tryPlay() {
+    if (started) return;
+    audio.play().then(() => {
+      started = true;
+    }).catch(() => {
+      // Browser blocked — will retry on interaction
+      started = false;
+    });
+  }
+
+  // Try immediately on page load
+  tryPlay();
+
+  // Fallback: retry on any user interaction if browser blocked autoplay
+  ['click', 'scroll', 'keydown', 'touchstart', 'mousedown'].forEach(evt => {
+    document.addEventListener(evt, tryPlay, { once: false, passive: true });
+  });
+})();
+
 /* ---- SMOOTH SCROLL (Lenis — fixes Windows wheel jumping) ---- */
 const lenis = new Lenis({
   duration: 1.2,
@@ -87,8 +117,991 @@ setTimeout(() => {
     }, 800);
     // Init logo animation
     initLogoAnimation();
+    // Init character explosion for end of hero
+    initCharExplosion();
+    // Init amber door + debris system
+    initDoorSystem();
   }, 1200);
 }, 2600); // intro duration
+
+/* ---- AMBER DOOR + DEBRIS ANIMATION SYSTEM ---- */
+/*
+  Phase 1: Realistic wood door fragments scattered, interactive
+  Phase 2: Fragments assemble into tight door frame — SYNCED with word merge
+  Phase 3: Word cycling inside frame
+  Phase 4: Frame reshapes to vertical door + becomes solid with knob (left)
+  Phase 5: Door slowly opens WHILE zooming in simultaneously → white → About
+
+  IMPORTANT: body.background is ONLY set during portal zoom, and ALWAYS cleared otherwise.
+*/
+function initDoorSystem() {
+  const canvas = document.getElementById('debris-canvas');
+  const door = document.getElementById('amber-door');
+  const heroScene = document.getElementById('scene-hero');
+  const portalScene = document.getElementById('scene-door-portal');
+  const elOwn = document.getElementById('hw-own');
+  const elThe = document.getElementById('hw-the');
+  const elMarket = document.getElementById('hw-market');
+
+  if (!canvas || !door || !heroScene) return;
+
+  const ctx = canvas.getContext('2d');
+  let cW = window.innerWidth;
+  let cH = window.innerHeight;
+  canvas.width = cW;
+  canvas.height = cH;
+  canvas.classList.add('interactive');
+
+  window.addEventListener('resize', () => {
+    cW = window.innerWidth; cH = window.innerHeight;
+    canvas.width = cW; canvas.height = cH;
+  });
+
+  // === WOOD DOOR FRAGMENTS ===
+  const PIECE_COUNT = 18;
+  const pieces = [];
+  const AMB = { r: 201, g: 146, b: 42 };
+  // Pre-generate a small wood texture pattern
+  const woodPattern = (function() {
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 64;
+    const x = c.getContext('2d');
+    // Base wood color
+    x.fillStyle = '#b8873a';
+    x.fillRect(0, 0, 64, 64);
+    // Dark grain lines
+    x.strokeStyle = 'rgba(90,55,10,0.3)';
+    x.lineWidth = 1;
+    for (let i = 0; i < 64; i += 3 + Math.random() * 4) {
+      x.beginPath();
+      x.moveTo(0, i);
+      x.bezierCurveTo(16, i + (Math.random()-0.5)*3, 48, i + (Math.random()-0.5)*3, 64, i + (Math.random()-0.5)*2);
+      x.stroke();
+    }
+    // Light grain highlights
+    x.strokeStyle = 'rgba(220,180,100,0.15)';
+    for (let i = 2; i < 64; i += 5 + Math.random() * 6) {
+      x.beginPath();
+      x.moveTo(0, i);
+      x.lineTo(64, i + (Math.random()-0.5)*2);
+      x.stroke();
+    }
+    return ctx.createPattern(c, 'repeat');
+  })();
+
+  for (let i = 0; i < PIECE_COUNT; i++) {
+    const nv = 4 + Math.floor(Math.random() * 3);
+    const verts = [];
+    const sz = 18 + Math.random() * 30;
+    for (let v = 0; v < nv; v++) {
+      const a = (v / nv) * Math.PI * 2 + (Math.random() - 0.5) * 0.9;
+      const d = sz * (0.35 + Math.random() * 0.65);
+      verts.push({ x: Math.cos(a) * d, y: Math.sin(a) * d });
+    }
+    const thickness = 3 + Math.random() * 5;
+    const shade = 0.6 + Math.random() * 0.4;
+
+    pieces.push({
+      scatterX: Math.random() * cW,
+      scatterY: Math.random() * cH,
+      scatterRot: (Math.random() - 0.5) * Math.PI * 4,
+      targetX: 0, targetY: 0, targetRot: 0,
+      x: 0, y: 0, rot: 0,
+      verts, thickness, shade,
+      userRot: 0, frameW: 0, frameH: 0
+    });
+  }
+
+  // === MOUSE ===
+  let mx = -9999, my = -9999;
+  canvas.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  canvas.addEventListener('mouseleave', () => { mx = -9999; my = -9999; });
+
+  // === FRAME TARGETS — tight around text ===
+  function calcFrameTargets(rect) {
+    const { x, y, w, h } = rect;
+    const bw = 8; // thicker frame border so bars form a visible frame
+    const perim = 2 * (w + h);
+    const seg = perim / PIECE_COUNT;
+    for (let i = 0; i < PIECE_COUNT; i++) {
+      const d = i * seg;
+      let tx, ty, tr, fw, fh;
+      if (d < w) {
+        tx = x + d + seg / 2; ty = y; tr = 0; fw = seg + 4; fh = bw;
+      } else if (d < w + h) {
+        tx = x + w; ty = y + (d - w) + seg / 2; tr = Math.PI / 2; fw = seg + 4; fh = bw;
+      } else if (d < 2 * w + h) {
+        tx = x + w - (d - w - h) - seg / 2; ty = y + h; tr = Math.PI; fw = seg + 4; fh = bw;
+      } else {
+        tx = x; ty = y + h - (d - 2 * w - h) - seg / 2; tr = -Math.PI / 2; fw = seg + 4; fh = bw;
+      }
+      // Clamp targets to stay within frame bounds
+      pieces[i].targetX = Math.max(x, Math.min(x + w, tx));
+      pieces[i].targetY = Math.max(y, Math.min(y + h, ty));
+      pieces[i].targetRot = tr;
+      pieces[i].frameW = fw;
+      pieces[i].frameH = fh;
+    }
+  }
+
+  function getTextBounds() {
+    const els = [elOwn, elThe, elMarket].filter(e => e && e.style.opacity !== '0');
+    if (els.length === 0) return { x: cW/2 - 250, y: cH/2 - 80, w: 500, h: 160 };
+    let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+    els.forEach(el => {
+      const r = el.getBoundingClientRect();
+      if (r.left < x1) x1 = r.left;
+      if (r.top < y1) y1 = r.top;
+      if (r.right > x2) x2 = r.right;
+      if (r.bottom > y2) y2 = r.bottom;
+    });
+    const pad = 18; // tight padding
+    return { x: x1 - pad, y: y1 - pad, w: (x2 - x1) + pad * 2, h: (y2 - y1) + pad * 2 };
+  }
+
+  const DOOR_W = 220;
+  const DOOR_H = 420;
+
+  // === DRAW 3D WOOD FRAGMENT ===
+  function drawFragment(p, morphT) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot + p.userRot * (1 - morphT));
+
+    const hw = (p.frameW || 20) / 2;
+    const hh = (p.frameH || 6) / 2;
+
+    // Build shape path (morph from shard → bar)
+    // morphT < 0.7: interpolate vertices (still irregular)
+    // morphT 0.7→0.85: blend toward perfect rectangle
+    // morphT >= 0.85: perfect rectangle
+    function shapePath() {
+      ctx.beginPath();
+      if (morphT >= 0.85) {
+        // Perfect rectangle
+        ctx.rect(-hw, -hh, hw * 2, hh * 2);
+      } else if (morphT > 0.7) {
+        // Blend: interpolated vertices → perfect rect corners
+        const rectT = (morphT - 0.7) / 0.15; // 0→1
+        // Perfect rect corners: TL, TR, BR, BL
+        const rectCorners = [{x:-hw,y:-hh},{x:hw,y:-hh},{x:hw,y:hh},{x:-hw,y:hh}];
+        p.verts.forEach((v, idx) => {
+          // Target: nearest rect corner based on vertex angle
+          const cornerIdx = Math.min(idx, rectCorners.length - 1);
+          const rc = rectCorners[cornerIdx];
+          // Interpolated position
+          const bx = (idx < p.verts.length / 2 ? -hw : hw);
+          const by = (idx < p.verts.length / 2 ? -hh : hh);
+          const ix = v.x + (bx - v.x) * morphT;
+          const iy = v.y + (by - v.y) * morphT;
+          // Blend toward perfect corner
+          const fx = ix + (rc.x - ix) * rectT;
+          const fy = iy + (rc.y - iy) * rectT;
+          idx === 0 ? ctx.moveTo(fx, fy) : ctx.lineTo(fx, fy);
+        });
+      } else {
+        // Normal vertex interpolation
+        p.verts.forEach((v, idx) => {
+          const bx = (idx < p.verts.length / 2 ? -hw : hw);
+          const by = (idx < p.verts.length / 2 ? -hh : hh);
+          const ix = v.x + (bx - v.x) * morphT;
+          const iy = v.y + (by - v.y) * morphT;
+          idx === 0 ? ctx.moveTo(ix, iy) : ctx.lineTo(ix, iy);
+        });
+      }
+      ctx.closePath();
+    }
+
+    // 3D side face (depth)
+    if (morphT < 0.8) {
+      const th = p.thickness * (1 - morphT);
+      ctx.save();
+      ctx.translate(th * 0.4, th * 0.6);
+      shapePath();
+      ctx.fillStyle = `rgb(${Math.round(AMB.r * p.shade * 0.4)}, ${Math.round(AMB.g * p.shade * 0.4)}, ${Math.round(AMB.b * p.shade * 0.4)})`;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Top face with wood texture
+    shapePath();
+    ctx.save();
+    ctx.clip();
+    // Wood pattern fill
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = woodPattern;
+    ctx.fillRect(-40, -40, 80, 80);
+    ctx.globalAlpha = 1;
+    // Amber tint overlay
+    ctx.fillStyle = `rgba(${Math.round(AMB.r * p.shade)}, ${Math.round(AMB.g * p.shade)}, ${Math.round(AMB.b * p.shade)}, 0.55)`;
+    ctx.fillRect(-40, -40, 80, 80);
+    ctx.restore();
+
+    // Re-draw shape for stroke
+    shapePath();
+    // Top highlight edge
+    ctx.strokeStyle = `rgba(255,220,150,${0.25 * (1 - morphT * 0.5)})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Drop shadow
+    if (morphT < 0.7) {
+      ctx.shadowColor = `rgba(0,0,0,${0.3 * (1 - morphT)})`;
+      ctx.shadowBlur = 10 * (1 - morphT);
+      ctx.shadowOffsetX = 3 * (1 - morphT);
+      ctx.shadowOffsetY = 5 * (1 - morphT);
+    }
+
+    ctx.restore();
+  }
+
+  // === DRAW SOLID DOOR ===
+  // openAngle: 0 = closed, 1 = fully open (3D perspective swing from left hinge)
+  // drawSolidDoor: draws door at given position
+  // openT: 0 = fully closed, 1 = fully open (door panel slides left, reveals white interior)
+  function drawSolidDoor(x, y, w, h, alpha, openT) {
+    alpha = Math.min(1, alpha);
+    openT = openT || 0;
+    const openEase = openT > 0 ? (1 - Math.pow(1 - openT, 2)) : 0;
+
+    ctx.save();
+
+    // === DOOR FRAME (always visible) ===
+    const frameBW = 5;
+    ctx.fillStyle = `rgba(140, 100, 25, ${alpha})`;
+    // Top
+    ctx.fillRect(x, y, w, frameBW);
+    // Bottom
+    ctx.fillRect(x, y + h - frameBW, w, frameBW);
+    // Left
+    ctx.fillRect(x, y, frameBW, h);
+    // Right
+    ctx.fillRect(x + w - frameBW, y, frameBW, h);
+
+    // === WHITE INTERIOR (visible as door opens) ===
+    if (openEase > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${alpha * openEase})`;
+      ctx.fillRect(x + frameBW, y + frameBW, w - frameBW * 2, h - frameBW * 2);
+    }
+
+    // === DOOR PANEL (slides from right to left as it opens) ===
+    // When closed: panel fills entire interior
+    // When open: panel width shrinks toward left hinge
+    const interiorX = x + frameBW;
+    const interiorY = y + frameBW;
+    const interiorW = w - frameBW * 2;
+    const interiorH = h - frameBW * 2;
+    // Panel shrinks to just the frame border width (flush against left frame edge)
+    const minPanelW = frameBW;
+    const panelW = minPanelW + (interiorW - minPanelW) * (1 - openEase);
+
+    if (panelW > 2) {
+      // Door panel gradient
+      const grd = ctx.createLinearGradient(interiorX, interiorY, interiorX + panelW, interiorY + interiorH);
+      grd.addColorStop(0, `rgba(212, 168, 83, ${alpha})`);
+      grd.addColorStop(0.4, `rgba(201, 146, 42, ${alpha})`);
+      grd.addColorStop(1, `rgba(155, 112, 28, ${alpha})`);
+      ctx.fillStyle = grd;
+      ctx.fillRect(interiorX, interiorY, panelW, interiorH);
+
+      // Panel inset decoration
+      if (panelW > 30) {
+        ctx.strokeStyle = `rgba(180,130,35,${alpha * 0.3})`;
+        ctx.lineWidth = 1;
+        const inset = Math.min(10, panelW * 0.1);
+        const topPanelH = interiorH * 0.38;
+        ctx.strokeRect(interiorX + inset, interiorY + inset, panelW - inset * 2, topPanelH - inset);
+        ctx.strokeRect(interiorX + inset, interiorY + topPanelH + 4, panelW - inset * 2, interiorH - topPanelH - inset - 4);
+      }
+
+      // Wood grain on panel
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(interiorX, interiorY, panelW, interiorH);
+      ctx.clip();
+      ctx.strokeStyle = `rgba(0,0,0,${alpha * 0.04})`;
+      ctx.lineWidth = 1;
+      for (let gy = interiorY + 5; gy < interiorY + interiorH; gy += 9) {
+        ctx.beginPath();
+        ctx.moveTo(interiorX + 1, gy);
+        ctx.lineTo(interiorX + panelW - 1, gy);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Knob (on right side of panel, near the edge that moves)
+      if (alpha > 0.3 && panelW > 20) {
+        const ka = Math.min(1, (alpha - 0.3) / 0.7);
+        const kx = interiorX + panelW - 15;
+        const ky = interiorY + interiorH * 0.5;
+        // Shadow
+        ctx.beginPath();
+        ctx.arc(kx + 1, ky + 1, 6, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0,0,0,${ka * 0.15})`;
+        ctx.fill();
+        // Knob
+        ctx.beginPath();
+        ctx.arc(kx, ky, 5, 0, Math.PI * 2);
+        const kg = ctx.createRadialGradient(kx - 1, ky - 1, 0, kx, ky, 5);
+        kg.addColorStop(0, `rgba(230,190,90,${ka})`);
+        kg.addColorStop(0.5, `rgba(201,146,42,${ka})`);
+        kg.addColorStop(1, `rgba(130,95,20,${ka})`);
+        ctx.fillStyle = kg;
+        ctx.fill();
+        // Highlight
+        ctx.beginPath();
+        ctx.arc(kx - 1.5, ky - 1.5, 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${ka * 0.3})`;
+        ctx.fill();
+      }
+
+      // Shadow on the right edge of panel (depth)
+      if (openEase > 0.05) {
+        const shadowAlpha = alpha * openEase * 0.3;
+        const shadowW = Math.min(8, panelW * 0.05);
+        const shadowGrad = ctx.createLinearGradient(interiorX + panelW, interiorY, interiorX + panelW + shadowW, interiorY);
+        shadowGrad.addColorStop(0, `rgba(0,0,0,${shadowAlpha})`);
+        shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = shadowGrad;
+        ctx.fillRect(interiorX + panelW, interiorY, shadowW, interiorH);
+      }
+    }
+
+    // Frame border highlight
+    ctx.strokeStyle = `rgba(100, 70, 15, ${alpha * 0.5})`;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+
+    ctx.restore();
+  }
+
+  // === MAIN UPDATE ===
+
+  function update() {
+    const scrollY = window.scrollY;
+    const viewH = window.innerHeight;
+    const viewW = window.innerWidth;
+    const heroH = heroScene.offsetHeight;
+    const sceneH = heroH - viewH;
+    const t = Math.min(Math.max(scrollY / sceneH, 0), 1);
+
+    // Merge progress — SYNCED with hero word merge
+    const mergeScrollEnd = viewH * 1.2;
+    const mergeRaw = Math.min(Math.max(scrollY / mergeScrollEnd, 0), 1);
+    const mergeEase = 1 - Math.pow(1 - mergeRaw, 2.5);
+
+    const portalTop = portalScene ? portalScene.offsetTop : heroH;
+    const portalH = portalScene ? portalScene.offsetHeight : viewH * 2;
+    // portalT: 0 when we START scrolling into portal (portal top hits viewport bottom)
+    //          1 when we've scrolled through the full portal height
+    const portalScrollRange = portalH - viewH; // actual scrollable distance within portal
+    const portalT = portalScene ? Math.min(Math.max((scrollY - portalTop) / portalScrollRange, 0), 1) : 0;
+
+    ctx.clearRect(0, 0, cW, cH);
+
+    const textBounds = getTextBounds();
+    calcFrameTargets(textBounds);
+
+    // Mouse interaction
+    pieces.forEach(p => {
+      const dx = mx - p.x, dy = my - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 120 && mergeEase < 0.4) {
+        p.userRot += (Math.atan2(dy, dx) * 0.1 - p.userRot) * 0.15;
+      } else {
+        p.userRot *= 0.9;
+      }
+    });
+
+    // ============================================================
+    // PHASE 1-3: Debris → frame (synced with word merge exactly)
+    // When mergeEase > 0.85, draw a single continuous frame instead of pieces
+    // ============================================================
+    if (t < 0.82 && portalT <= 0) {
+      // Always update piece positions
+      pieces.forEach(p => {
+        p.x = p.scatterX + (p.targetX - p.scatterX) * mergeEase;
+        p.y = p.scatterY + (p.targetY - p.scatterY) * mergeEase;
+        p.rot = p.scatterRot + (p.targetRot - p.scatterRot) * mergeEase;
+      });
+
+      // Shape morph: ramp morphT aggressively so pieces are perfect rects early
+      // mergeEase 0→0.4: morphT follows position (0→0.4)
+      // mergeEase 0.4→0.65: morphT jumps to 1.0 (forces perfect rectangle)
+      let morphT;
+      if (mergeEase < 0.4) {
+        morphT = mergeEase;
+      } else if (mergeEase < 0.65) {
+        const ramp = (mergeEase - 0.4) / 0.25;
+        morphT = 0.4 + ramp * 0.6; // 0.4→1.0
+      } else {
+        morphT = 1.0; // guaranteed perfect rectangle
+      }
+
+      // === DRAW DEBRIS — they ARE the frame when assembled ===
+      // After morphT=1 (pieces are rectangles), adjust bar lengths to close gaps
+      // mergeEase 0.70→0.85: bars stretch/adjust to form a perfect continuous rectangle
+      let barAdjustT = 0;
+      if (mergeEase > 0.70) {
+        barAdjustT = Math.min((mergeEase - 0.70) / 0.15, 1);
+        barAdjustT = 1 - Math.pow(1 - barAdjustT, 2); // ease-out
+
+        // Calculate perfect bar sizes to cover each edge completely
+        const { x, y, w, h } = textBounds;
+        const bw = 8;
+        // Count pieces per edge
+        const perim = 2 * (w + h);
+        const seg = perim / PIECE_COUNT;
+
+        pieces.forEach((p, i) => {
+          const d = i * seg;
+          let perfectW, perfectH, perfectX, perfectY, perfectRot;
+
+          if (d < w) {
+            // Top edge — piece should span from its start to next piece start
+            const startX = x + (d / w) * w;
+            const endX = x + (Math.min(d + seg, w) / w) * w;
+            perfectW = endX - startX + 1;
+            perfectH = bw;
+            perfectX = (startX + endX) / 2;
+            perfectY = y;
+            perfectRot = 0;
+          } else if (d < w + h) {
+            const localD = d - w;
+            const startY = y + (localD / h) * h;
+            const endY = y + (Math.min(localD + seg, h) / h) * h;
+            perfectW = endY - startY + 1;
+            perfectH = bw;
+            perfectX = x + w;
+            perfectY = (startY + endY) / 2;
+            perfectRot = Math.PI / 2;
+          } else if (d < 2 * w + h) {
+            const localD = d - w - h;
+            const startX = x + w - (localD / w) * w;
+            const endX = x + w - (Math.min(localD + seg, w) / w) * w;
+            perfectW = Math.abs(endX - startX) + 1;
+            perfectH = bw;
+            perfectX = (startX + endX) / 2;
+            perfectY = y + h;
+            perfectRot = Math.PI;
+          } else {
+            const localD = d - 2 * w - h;
+            const startY = y + h - (localD / h) * h;
+            const endY = y + h - (Math.min(localD + seg, h) / h) * h;
+            perfectW = Math.abs(endY - startY) + 1;
+            perfectH = bw;
+            perfectX = x;
+            perfectY = (startY + endY) / 2;
+            perfectRot = -Math.PI / 2;
+          }
+
+          // Interpolate current frameW toward perfect size
+          p.frameW = p.frameW + (perfectW - p.frameW) * barAdjustT;
+          // Nudge position to close gaps
+          p.x = p.x + (perfectX - p.x) * barAdjustT;
+          p.y = p.y + (perfectY - p.y) * barAdjustT;
+          p.rot = p.rot + (perfectRot - p.rot) * barAdjustT;
+        });
+      }
+
+      // Draw pieces, then crossfade to single solid frame at the end
+      if (mergeEase < 0.80) {
+        pieces.forEach(p => drawFragment(p, morphT));
+      } else {
+        // Quick crossfade: bars fade out, single frame stroke fades in
+        const blendT = Math.min((mergeEase - 0.80) / 0.05, 1); // 0→1 over 0.80→0.85
+
+        // Fading bars
+        if (blendT < 1) {
+          ctx.save();
+          ctx.globalAlpha = 1 - blendT;
+          pieces.forEach(p => drawFragment(p, morphT));
+          ctx.globalAlpha = 1;
+          ctx.restore();
+        }
+
+        // Single solid amber frame
+        ctx.save();
+        ctx.globalAlpha = blendT;
+        ctx.strokeStyle = `rgb(${AMB.r}, ${AMB.g}, ${AMB.b})`;
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.rect(textBounds.x, textBounds.y, textBounds.w, textBounds.h);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+
+      door.style.opacity = '0';
+      canvas.classList.toggle('interactive', mergeEase < 0.4);
+      canvas.classList.remove('above-content');
+      canvas.style.opacity = '1';
+    }
+
+    // ============================================================
+    // PHASE 4: Frame → vertical solid door (t: 0.82 → 1.0)
+    // Starts when word cycling reaches "Take" and explosion begins
+    // ============================================================
+    if (t >= 0.82 && portalT <= 0) {
+      canvas.classList.remove('interactive');
+      canvas.classList.add('above-content');
+      canvas.style.opacity = '1';
+
+      // Fill canvas with solid black to cover any section gaps
+      ctx.fillStyle = '#080808';
+      ctx.fillRect(0, 0, cW, cH);
+
+      const reshapeT = Math.min((t - 0.82) / 0.18, 1);
+      const reshapeEase = 1 - Math.pow(1 - reshapeT, 2.5);
+
+      const curW = textBounds.w + (DOOR_W - textBounds.w) * reshapeEase;
+      const curH = textBounds.h + (DOOR_H - textBounds.h) * reshapeEase;
+      const curX = textBounds.x + ((viewW - DOOR_W) / 2 - textBounds.x) * reshapeEase;
+      const curY = textBounds.y + ((viewH - DOOR_H) / 2 - textBounds.y) * reshapeEase;
+
+      // Frame outline visible throughout, solid fill blends in gradually
+      // Frame outline: always visible, fades as fill takes over
+      const outlineAlpha = Math.max(0, 1 - reshapeEase);
+      if (outlineAlpha > 0) {
+        ctx.strokeStyle = `rgba(${AMB.r}, ${AMB.g}, ${AMB.b}, ${outlineAlpha})`;
+        ctx.lineWidth = 4 + reshapeEase * 2;
+        ctx.beginPath();
+        ctx.roundRect(curX, curY, curW, curH, [4, 4, 0, 0]);
+        ctx.stroke();
+      }
+      // Solid fill: ramps smoothly from 0→1 across entire reshape
+      {
+        const fillA = reshapeEase;
+
+        // Door stays fully closed until reshape is complete AND we're past the hero
+        // Then gradually opens through the gap before portal
+        let earlyOpen = 0;
+        if (reshapeEase >= 1 && scrollY > sceneH) {
+          // Wait 30% into the gap before starting to open (brief solid door moment)
+          const gapRaw = (scrollY - sceneH) / (portalTop - sceneH);
+          const gapProgress = Math.min(Math.max((gapRaw - 0.3) / 0.7, 0), 1);
+          earlyOpen = gapProgress * 0.15; // 0→0.15
+        }
+
+        // Slight zoom during the gap — starts after the brief solid door pause
+        let gapZoom = 1;
+        if (reshapeEase >= 1 && scrollY > sceneH) {
+          const gapRaw = (scrollY - sceneH) / (portalTop - sceneH);
+          const gp = Math.min(Math.max((gapRaw - 0.3) / 0.7, 0), 1);
+          gapZoom = 1 + gp * 0.3; // 1→1.3
+        }
+        if (gapZoom > 1) {
+          ctx.save();
+          ctx.translate(viewW / 2, viewH / 2);
+          ctx.scale(gapZoom, gapZoom);
+          ctx.translate(-viewW / 2, -viewH / 2);
+        }
+
+        drawSolidDoor(curX, curY, curW, curH, fillA, earlyOpen);
+
+        if (gapZoom > 1) {
+          ctx.restore();
+        }
+      }
+
+    }
+
+    // ============================================================
+    // PHASE 5: Door opens + zoom in SIMULTANEOUSLY
+    // 500vh portal, scrollRange = 400vh — very slow cinematic
+    //
+    // portalT 0.0→0.3 : Door opens slowly, zoom barely starts (1x→1.5x)
+    //                    User sees the door panel sliding left, white peeking through
+    // portalT 0.3→0.5 : Door fully open, user SEES white interior, zoom gentle (1.5x→3x)
+    // portalT 0.5→0.7 : Zoom into the opening (3x→8x), entering the doorway
+    // portalT 0.7→0.9 : Zoom fills screen (8x→20x), white bg transition
+    // portalT 0.9→1.0 : Fully white, canvas fades out
+    //
+    // At scale ~5x the 220px door = 1100px which fills most viewports,
+    // so by portalT 0.5 you're looking through the open doorway.
+    // ============================================================
+    if (portalT > 0 && portalT < 1) {
+      canvas.classList.remove('interactive');
+      canvas.classList.add('above-content');
+      // Clear any stale content before drawing
+      ctx.clearRect(0, 0, cW, cH);
+
+      const doorX = (viewW - DOOR_W) / 2;
+      const doorY = (viewH - DOOR_H) / 2;
+
+      // --- DOOR OPENING: starts at 0.15 (where Phase 4 left off) ---
+      // 0→0.3 = opens from 0.15 to 0.7, 0.3→0.5 = fully open
+      let openAmount;
+      if (portalT < 0.3) {
+        openAmount = 0.15 + (portalT / 0.3) * 0.55; // 0.15→0.7
+      } else if (portalT < 0.5) {
+        openAmount = 0.7 + ((portalT - 0.3) / 0.2) * 0.3; // 0.7→1.0
+      } else {
+        openAmount = 1;
+      }
+
+      // --- ZOOM: smooth continuous curve, no big jumps ---
+      // Quadratic ease-in — less extreme slow start, smoother throughout
+      const zoomRaw = portalT;
+      const zoomEaseIn = zoomRaw * zoomRaw; // quadratic ease-in
+      const zoomScale = 1.3 + zoomEaseIn * 48.7; // 1.3→50
+
+      canvas.style.opacity = '1';
+
+      // Black background behind the door
+      ctx.fillStyle = '#080808';
+      ctx.fillRect(0, 0, cW, cH);
+
+      // Draw door — the white comes from the door's open interior naturally
+      ctx.save();
+      ctx.translate(viewW / 2, viewH / 2);
+      ctx.scale(zoomScale, zoomScale);
+      ctx.translate(-viewW / 2, -viewH / 2);
+
+      drawSolidDoor(doorX, doorY, DOOR_W, DOOR_H, 1, openAmount);
+
+      ctx.restore();
+
+      // --- STAGED HEADER COLOR TRANSITION ---
+      // White expands from center outward. Logo (center) turns black first,
+      // then nav links + contact (sides) follow as white reaches the edges.
+      //
+      // Door interior bounds in screen space:
+      const frameBW = 5;
+      const intTop = viewH / 2 - (viewH / 2 - doorY - frameBW) * zoomScale;
+      const intLeft = viewW / 2 - (viewW / 2 - doorX - frameBW) * zoomScale;
+      const intRight = viewW / 2 + (doorX + DOOR_W - frameBW - viewW / 2) * zoomScale;
+
+      const navEl = document.getElementById('navbar');
+      const heroLogo = document.getElementById('hero-logo');
+      const navLinks = navEl ? navEl.querySelector('.nav-links') : null;
+      const navContact = navEl ? navEl.querySelector('.nav-contact') : null;
+
+      // Logo turns black when white interior has expanded enough to fill most of screen
+      if (heroLogo) {
+        heroLogo.style.color = zoomScale > 3 ? 'var(--black)' : 'var(--white)';
+        heroLogo.style.transition = 'color 0.5s ease';
+      }
+
+      // Other buttons follow shortly after
+      const sideBlack = zoomScale > 6;
+      if (navLinks) {
+        navLinks.querySelectorAll('a').forEach(a => {
+          a.style.color = sideBlack ? 'var(--black)' : '';
+          a.style.transition = 'color 0.6s ease';
+        });
+      }
+      if (navContact) {
+        navContact.style.color = sideBlack ? 'var(--black)' : '';
+        navContact.style.transition = 'color 0.6s ease';
+        navContact.querySelectorAll('a').forEach(a => {
+          a.style.color = sideBlack ? 'var(--black)' : '';
+          a.style.transition = 'color 0.6s ease';
+        });
+      }
+
+      // CTA light-mode when white is visible
+      const fixedCta = document.querySelector('.fixed-cta');
+      if (fixedCta) {
+        if (zoomScale > 3) fixedCta.classList.add('light-mode');
+        else fixedCta.classList.remove('light-mode');
+      }
+
+      // Canvas stays visible — clone overlay handles the transition to About
+    }
+
+    // ============================================================
+    // AGGRESSIVE BACKGROUND RESET — the #1 rule:
+    // body.background is ONLY white during portal zoom (portalT > 0 && portalT < 1)
+    // EVERYWHERE else it must be cleared. No exceptions.
+    // ============================================================
+    if (!(portalT > 0 && portalT < 1)) {
+      document.body.style.background = '';
+      if (scrollY < portalTop) {
+        // Scrolling back into hero — reset header to white
+        const navEl = document.getElementById('navbar');
+        const heroLogo = document.getElementById('hero-logo');
+        if (heroLogo) { heroLogo.style.color = ''; heroLogo.style.transition = ''; }
+        if (navEl) {
+          navEl.querySelectorAll('.nav-links a').forEach(a => { a.style.color = ''; a.style.transition = ''; });
+          const nc = navEl.querySelector('.nav-contact');
+          if (nc) { nc.style.color = ''; nc.style.transition = ''; nc.querySelectorAll('a').forEach(a => { a.style.color = ''; a.style.transition = ''; }); }
+        }
+      }
+      // Past portal — keep header black for About page white bg
+      // The navbar scroll handler will take over from here
+    }
+
+    // Past portal — hide canvas/door, clear canvas content
+    if (scrollY >= portalTop + portalH) {
+      ctx.clearRect(0, 0, cW, cH);
+      canvas.style.opacity = '0';
+      canvas.classList.remove('above-content');
+      door.style.opacity = '0';
+      // Clear inline transitions ONCE (not colors — navbar handler manages those)
+      if (!this._portalCleanedUp) {
+        this._portalCleanedUp = true;
+        const navEl = document.getElementById('navbar');
+        if (navEl) {
+          navEl.querySelectorAll('.nav-links a').forEach(a => { a.style.transition = ''; });
+          const nc = navEl.querySelector('.nav-contact');
+          if (nc) { nc.style.transition = ''; nc.querySelectorAll('a').forEach(a => { a.style.transition = ''; }); }
+        }
+        const heroLogo = document.getElementById('hero-logo');
+        if (heroLogo) { heroLogo.style.transition = ''; }
+      }
+    } else {
+      this._portalCleanedUp = false;
+    }
+
+    // Reset at top
+    if (scrollY < 10) {
+      door.style.opacity = '0';
+      door.style.transform = '';
+      door.classList.remove('solid');
+      canvas.style.opacity = '1';
+      canvas.classList.add('interactive');
+      canvas.classList.remove('above-content');
+    }
+
+    // Between hero end and portal start
+    if (t >= 1 && portalT <= 0) {
+      canvas.style.opacity = '1';
+    }
+  }
+
+  window.addEventListener('scroll', () => requestAnimationFrame(update), { passive: true });
+
+  // Continuous render for mouse interaction + smooth animation
+  (function loop() {
+    update();
+    requestAnimationFrame(loop);
+  })();
+}
+
+/* ---- ABOUT TEXT SCATTER-TO-MERGE ---- */
+/*
+  Each character starts scattered randomly across the screen.
+  As progress goes 0→1, chars fly inward and assemble into their correct positions.
+  Reverse of the hero text explosion.
+*/
+const aboutScatter = {
+  initialized: false,
+  elements: [],  // { el, originalText, chars: [{ span, startX, startY, startRot }] }
+
+  init(aboutEl) {
+    if (this.initialized) return;
+    this.initialized = true;
+    this.elements = [];
+
+    const targets = aboutEl.querySelectorAll('.statement-eyebrow, .statement-line, .statement-sub');
+    targets.forEach(el => {
+      const entry = { el, originalHTML: el.innerHTML, chars: [] };
+
+      // Walk through all child nodes to preserve colors from inner spans
+      const charData = [];
+      function extractChars(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          for (let i = 0; i < node.textContent.length; i++) {
+            charData.push({ char: node.textContent[i], color: null });
+          }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          const color = node.style.color || null;
+          if (node.childNodes.length === 0) {
+            // Self-closing or empty
+          } else {
+            node.childNodes.forEach(child => {
+              if (child.nodeType === Node.TEXT_NODE) {
+                for (let i = 0; i < child.textContent.length; i++) {
+                  charData.push({ char: child.textContent[i], color: color });
+                }
+              } else {
+                extractChars(child);
+              }
+            });
+          }
+        }
+      }
+      el.childNodes.forEach(node => extractChars(node));
+
+      el.innerHTML = '';
+      el.style.overflow = 'visible';
+      el.style.position = 'relative';
+
+      charData.forEach(cd => {
+        const span = document.createElement('span');
+        span.textContent = cd.char;
+        span.style.display = 'inline-block';
+        span.style.willChange = 'transform, opacity';
+        if (cd.color) span.style.color = cd.color;
+        if (cd.char === ' ') span.style.width = '0.3em';
+        el.appendChild(span);
+
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 400 + Math.random() * 800;
+        entry.chars.push({
+          span,
+          startX: Math.cos(angle) * dist,
+          startY: Math.sin(angle) * dist,
+          startRot: (Math.random() - 0.5) * 360
+        });
+      });
+
+      this.elements.push(entry);
+    });
+  },
+
+  update(progress) {
+    // progress: 0 = fully scattered, 1 = fully assembled
+    const ease = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+
+    this.elements.forEach(entry => {
+      entry.chars.forEach(ch => {
+        if (ease >= 0.99) {
+          // Fully assembled — switch to inline so word wrap matches normal flow
+          ch.span.style.display = 'inline';
+          ch.span.style.transform = '';
+          ch.span.style.opacity = '1';
+        } else {
+          // Still animating — need inline-block for transforms
+          ch.span.style.display = 'inline-block';
+          const x = ch.startX * (1 - ease);
+          const y = ch.startY * (1 - ease);
+          const rot = ch.startRot * (1 - ease);
+          const opacity = Math.min(1, ease * 1.5);
+
+          ch.span.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
+          ch.span.style.opacity = String(opacity);
+        }
+      });
+    });
+  },
+
+  reset() {
+    if (!this.initialized) return;
+    this.elements.forEach(entry => {
+      entry.el.innerHTML = entry.originalHTML;
+      entry.el.style.overflow = '';
+      entry.el.style.position = '';
+    });
+    this.elements = [];
+    this.initialized = false;
+  }
+};
+
+/* ---- CHARACTER EXPLOSION (after "Take the Market") ---- */
+/*
+  When the hero word cycling reaches "Take" and the explosion phase starts (t > 0.85),
+  split each hero word into individual characters and explode them outward.
+*/
+function initCharExplosion() {
+  const elOwn = document.getElementById('hw-own');
+  const elThe = document.getElementById('hw-the');
+  const elMarket = document.getElementById('hw-market');
+  const heroScene = document.getElementById('scene-hero');
+  if (!elOwn || !elThe || !elMarket || !heroScene) return;
+
+  let charsWrapped = false;
+  let allChars = [];
+
+  // Wrap each letter in a span for individual animation
+  function wrapChars() {
+    if (charsWrapped) return;
+    charsWrapped = true;
+
+    [elOwn, elThe, elMarket].forEach(el => {
+      // Get the text content (for elOwn, get the changing word span's text)
+      const changingWord = el.querySelector('.hero-changing-word');
+      const textSource = changingWord || el;
+      const text = textSource.textContent;
+
+      // Build character spans
+      const frag = document.createDocumentFragment();
+      for (let i = 0; i < text.length; i++) {
+        const span = document.createElement('span');
+        span.textContent = text[i];
+        span.className = 'explode-char';
+        span.style.display = 'inline-block';
+        span.style.willChange = 'transform, opacity';
+        frag.appendChild(span);
+      }
+
+      // Replace content
+      if (changingWord) {
+        changingWord.textContent = '';
+        changingWord.appendChild(frag);
+      } else {
+        el.textContent = '';
+        el.appendChild(frag);
+      }
+    });
+
+    // Collect all char spans
+    allChars = Array.from(document.querySelectorAll('.explode-char'));
+
+    // Assign random explosion vectors to each char
+    allChars.forEach((ch, i) => {
+      const angle = (Math.random() * Math.PI * 2);
+      const dist = 300 + Math.random() * 600;
+      ch._explodeX = Math.cos(angle) * dist;
+      ch._explodeY = Math.sin(angle) * dist;
+      ch._explodeRot = (Math.random() - 0.5) * 360;
+    });
+  }
+
+  // Undo wrapping (when scrolling back before explosion)
+  function unwrapChars() {
+    if (!charsWrapped) return;
+    charsWrapped = false;
+
+    const changingWord = elOwn.querySelector('.hero-changing-word');
+    if (changingWord) {
+      const text = changingWord.textContent;
+      changingWord.textContent = text;
+    }
+    // "the" and "Market." are plain text
+    elThe.textContent = 'the';
+    elMarket.textContent = 'Market.';
+    allChars = [];
+  }
+
+  function onScroll() {
+    requestAnimationFrame(update);
+  }
+
+  function update() {
+    const scrollY = window.scrollY;
+    const viewH = window.innerHeight;
+    const sceneH = heroScene.offsetHeight - viewH;
+    const t = Math.min(Math.max(scrollY / sceneH, 0), 1);
+
+    if (t >= 0.82) {
+      // Wrap characters if not already
+      wrapChars();
+
+      const explodeT = Math.min((t - 0.82) / 0.18, 1); // 0→1
+      const ease = 1 - Math.pow(1 - explodeT, 2.5);
+
+      allChars.forEach(ch => {
+        const x = ch._explodeX * ease;
+        const y = ch._explodeY * ease;
+        const rot = ch._explodeRot * ease;
+        const scale = 1 - ease * 0.5;
+        const opacity = Math.max(0, 1 - ease * 1.2);
+
+        ch.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
+        ch.style.opacity = String(opacity);
+      });
+    } else {
+      // Reset — put text back to normal
+      if (charsWrapped) {
+        unwrapChars();
+      }
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+}
 
 /* ---- LOGO ANIMATION (hero → navbar on scroll) ---- */
 function initLogoAnimation() {
@@ -151,13 +1164,18 @@ window.addEventListener('scroll', () => {
   const scrollY = window.scrollY;
 
   // Detect if navbar overlaps any light (cream) section
-  const lightSections = document.querySelectorAll('.scene-cream');
+  const lightSections = document.querySelectorAll('.scene-cream, .scene-about');
   const fixedCta = document.querySelector('.fixed-cta');
   const viewH = window.innerHeight;
   let overLight = false;
   let ctaOverLight = false;
 
   lightSections.forEach(section => {
+    // Skip sections that are hidden or have invisible inner content
+    if (section.style.visibility === 'hidden') return;
+    const inner = section.querySelector('.statement-inner');
+    if (inner && inner.style.opacity === '0') return;
+
     const rect = section.getBoundingClientRect();
     if (rect.top < 100 && rect.bottom > 0) overLight = true;
     if (fixedCta && rect.top < viewH - 40 && rect.bottom > viewH - 100) ctaOverLight = true;
@@ -199,7 +1217,6 @@ window.addEventListener('scroll', () => {
 
   const words = ['Own', 'Run', 'Lead', 'Take'];
   let currentWordIndex = 0;
-  let aboutDone = false;
 
   // Layout values — recalculated on resize
   let vh, vw, ownW, ownH, theW, theH, mktW, mktH;
@@ -316,105 +1333,134 @@ window.addEventListener('scroll', () => {
     const t = Math.min(Math.max(scrollY / sceneH, 0), 1);
     const mergeComplete = mergeScrollEnd / sceneH; // t value when merge finishes
 
+    // Dynamic word ranges — fit all 4 words between mergeComplete and 0.80
+    // Works on any hero height (desktop 400vh, mobile 350vh)
+    const wordStart = mergeComplete + 0.03;
+    const wordEnd = 0.80; // must finish before explosion at 0.82
+    const wordRange = (wordEnd - wordStart) / 4;
     let wordIndex;
-    if (t < mergeComplete + 0.05) wordIndex = 0;        // Own — stays until merge done + buffer
-    else if (t < mergeComplete + 0.20) wordIndex = 1;    // Run
-    else if (t < mergeComplete + 0.35) wordIndex = 2;    // Lead
-    else wordIndex = 3;                                    // Take
+    if (t < wordStart + wordRange) wordIndex = 0;
+    else if (t < wordStart + wordRange * 2) wordIndex = 1;
+    else if (t < wordStart + wordRange * 3) wordIndex = 2;
+    else wordIndex = 3;
 
-    if (wordIndex !== currentWordIndex) {
+    // Color per word: Own=white, Run=green, Lead=blue, Take=yellow
+    const wordColors = ['#FFFFFF', '#7CA630', '#4A9EC9', '#C9922A'];
+
+    // Don't change word if explosion has already wrapped characters
+    const explosionActive = document.querySelectorAll('.explode-char').length > 0;
+    if (wordIndex !== currentWordIndex && !explosionActive) {
       currentWordIndex = wordIndex;
       changingWord.style.transition = 'none';
       changingWord.style.transform = 'scaleY(0)';
       changingWord.textContent = words[wordIndex];
+      changingWord.style.color = wordColors[wordIndex];
       changingWord.offsetHeight;
-      changingWord.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+      changingWord.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s ease';
       changingWord.style.transform = 'scaleY(1)';
     }
 
-    // Zoom-through: words spread apart, About zooms in from center
-    const isMobileView = window.innerWidth <= 900;
+    // Character explosion is handled by initCharExplosion()
+    // Keep words visible until explosion takes over
+    if (t < 0.82) {
+      [elOwn, elThe, elMarket].forEach(el => {
+        el.style.transform = 'scale(1)';
+        el.style.opacity = '1';
+      });
+    }
 
-    if (isMobileView) {
-      // MOBILE: no fixed About zoom — just spread words and let About scroll in naturally
-      if (t > 0.9) {
-        const zoomT = (t - 0.9) / 0.1;
-        const zoomEase = 1 - Math.pow(1 - zoomT, 2);
-        const scale = 1 + zoomEase * 3;
-        const opacity = Math.max(0, 1 - zoomEase * 1.5);
-        const spread = zoomEase * 40;
+    // About text assembly now handled by portal section (initDoorSystem)
+    // Just hide hero words after hero ends
+    if (heroScene.getBoundingClientRect().bottom < 0) {
+      [elOwn, elThe, elMarket].forEach(el => { el.style.opacity = '0'; });
+    }
 
-        elOwn.style.transform = `scale(${scale}) translateX(${-spread}vw)`;
-        elOwn.style.opacity = String(opacity);
-        elThe.style.transform = `scale(${scale}) translateX(${-spread * 0.6}vw)`;
-        elThe.style.opacity = String(opacity);
-        elMarket.style.transform = `scale(${scale}) translateX(${spread}vw)`;
-        elMarket.style.opacity = String(opacity);
-      } else {
-        [elOwn, elThe, elMarket].forEach(el => {
-          el.style.transform = 'scale(1)';
-          el.style.opacity = '1';
-        });
+    // === ABOUT ZOOM-IN (during portal scroll) ===
+    // Strategy: create a CLONE overlay once. Show clone during portal, hide after.
+    // Real About section stays in flow always, never touched.
+    const portalScene = document.getElementById('scene-door-portal');
+    if (portalScene && aboutEl) {
+      const portalTop = portalScene.offsetTop;
+      const portalH = portalScene.offsetHeight;
+      const portalScrollRange = portalH - vh;
+      const portalT = Math.min(Math.max((scrollY - portalTop) / portalScrollRange, 0), 1);
+
+      const aboutStart = 0.47;
+      const aboutT = Math.min(Math.max((portalT - aboutStart) / (1 - aboutStart), 0), 1);
+
+      // Create clone overlay once — matches real About section layout exactly
+      let clone = document.getElementById('about-clone-overlay');
+      if (!clone) {
+        clone = document.createElement('div');
+        clone.id = 'about-clone-overlay';
+        // Match #scene-statement.scene-about layout exactly
+        clone.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100vh;z-index:7995;display:flex;align-items:center;justify-content:center;background:#fff;visibility:hidden;pointer-events:none;padding:clamp(80px,8vw,120px) clamp(24px,5vw,80px);box-sizing:border-box;';
+        // Copy the inner content — match .statement-inner exactly
+        const realInner = aboutEl.querySelector('.statement-inner');
+        const inner = document.createElement('div');
+        inner.innerHTML = realInner.innerHTML;
+        inner.className = 'statement-inner';
+        // Get computed styles from real inner to match
+        const cs = window.getComputedStyle(realInner);
+        inner.style.cssText = `max-width:${cs.maxWidth};width:100%;text-align:center;margin:0 auto;color:#080808;transform:scale(0);opacity:0;transform-origin:center center;`;
+        clone.appendChild(inner);
+        document.body.appendChild(clone);
+        // Apply About text colors to clone
+        clone.querySelectorAll('.statement-text, .statement-line').forEach(el => { el.style.color = '#080808'; });
+        clone.querySelectorAll('.statement-sub').forEach(el => { el.style.color = 'rgba(0,0,0,0.6)'; });
+        clone.querySelectorAll('.statement-eyebrow').forEach(el => { el.style.color = '#C9922A'; });
       }
-      if (heroScene.getBoundingClientRect().bottom < 0) {
-        [elOwn, elThe, elMarket].forEach(el => { el.style.opacity = '0'; });
-      }
-    } else {
-      // DESKTOP: full zoom-through with fixed About
-      // Release About from fixed only when scroll reaches its natural document position
-      const aboutRelease = scrollY >= heroScene.offsetHeight;
 
-      if (aboutRelease) {
-        // About is now naturally at the top of the viewport — release to normal flow
-        [elOwn, elThe, elMarket].forEach(el => { el.style.opacity = '0'; });
-        aboutEl.style.position = '';
-        aboutEl.style.top = '';
-        aboutEl.style.left = '';
-        aboutEl.style.width = '';
-        aboutEl.style.height = '';
-        aboutEl.style.zIndex = '';
-        aboutEl.style.transform = '';
-        aboutEl.style.opacity = '';
-        aboutEl.style.transformOrigin = '';
-        aboutEl.style.overflow = '';
-      } else if (t > 0.9) {
-        const zoomT = Math.min((t - 0.9) / 0.1, 1);
-        const zoomEase = 1 - Math.pow(1 - zoomT, 2);
-        const scale = 1 + zoomEase * 3;
-        const opacity = Math.max(0, 1 - zoomEase * 1.5);
-        const spread = zoomEase * 40;
+      const cloneInner = clone.querySelector('.statement-inner');
 
-        elOwn.style.transform = `scale(${scale}) translateX(${-spread}vw)`;
-        elOwn.style.opacity = String(opacity);
-        elThe.style.transform = `scale(${scale}) translateX(${-spread * 0.6}vw)`;
-        elThe.style.opacity = String(opacity);
-        elMarket.style.transform = `scale(${scale}) translateX(${spread}vw)`;
-        elMarket.style.opacity = String(opacity);
+      // Check if real About section covers viewport (for handoff)
+      const realAboutRect = aboutEl.getBoundingClientRect();
+      const realAboutCoversViewport = realAboutRect.top <= 0;
 
-        aboutEl.style.position = 'fixed';
-        aboutEl.style.top = '0';
-        aboutEl.style.left = '0';
-        aboutEl.style.width = '100%';
-        aboutEl.style.height = '100vh';
-        aboutEl.style.zIndex = '5';
-        aboutEl.style.transformOrigin = 'center center';
-        aboutEl.style.transform = `scale(${zoomEase})`;
-        aboutEl.style.opacity = String(zoomEase);
-        aboutEl.style.overflow = 'hidden';
+      // Keep logo black whenever clone or About white bg is visible
+      const heroLogo = document.getElementById('hero-logo');
+
+      if (aboutT > 0 && !realAboutCoversViewport) {
+        // Show clone with zoom animation — stays until real About takes over
+        clone.style.visibility = 'visible';
+        const zoomEase = Math.min(1, 1 - Math.pow(1 - aboutT, 2));
+        cloneInner.style.transform = `scale(${zoomEase})`;
+        cloneInner.style.opacity = String(zoomEase);
+        // Force entire header black — white bg is showing
+        if (heroLogo) heroLogo.style.color = 'var(--black)';
+        const navEl = document.getElementById('navbar');
+        if (navEl) {
+          navEl.querySelectorAll('.nav-links a').forEach(a => { a.style.color = 'var(--black)'; });
+          const nc = navEl.querySelector('.nav-contact');
+          if (nc) { nc.style.color = 'var(--black)'; nc.querySelectorAll('a').forEach(a => { a.style.color = 'var(--black)'; }); }
+        }
+        const cloneCta = document.querySelector('.fixed-cta');
+        if (cloneCta) cloneCta.classList.add('light-mode');
+      } else if (realAboutCoversViewport) {
+        // Real About has taken over — hide clone
+        clone.style.visibility = 'hidden';
+        clone.style.opacity = '1';
+        cloneInner.style.transform = '';
+        cloneInner.style.opacity = '';
+        // Clear inline colors ONCE so navbar handler can take over
+        if (!clone._handedOff) {
+          clone._handedOff = true;
+          if (heroLogo) { heroLogo.style.color = ''; }
+          const navEl = document.getElementById('navbar');
+          if (navEl) {
+            navEl.querySelectorAll('.nav-links a').forEach(a => { a.style.color = ''; });
+            const nc = navEl.querySelector('.nav-contact');
+            if (nc) { nc.style.color = ''; nc.querySelectorAll('a').forEach(a => { a.style.color = ''; }); }
+          }
+          const handoffCta = document.querySelector('.fixed-cta');
+          if (handoffCta) handoffCta.classList.remove('light-mode');
+        }
       } else {
-        [elOwn, elThe, elMarket].forEach(el => {
-          el.style.transform = 'scale(1)';
-          el.style.opacity = '1';
-        });
-        aboutEl.style.position = 'fixed';
-        aboutEl.style.top = '0';
-        aboutEl.style.left = '0';
-        aboutEl.style.width = '100%';
-        aboutEl.style.height = '100vh';
-        aboutEl.style.zIndex = '5';
-        aboutEl.style.transform = 'scale(0)';
-        aboutEl.style.opacity = '0';
-        aboutEl.style.overflow = 'hidden';
+        clone._handedOff = false;
+        // Before About animation — hide clone
+        clone.style.visibility = 'hidden';
+        cloneInner.style.transform = 'scale(0)';
+        cloneInner.style.opacity = '0';
       }
     }
   }
