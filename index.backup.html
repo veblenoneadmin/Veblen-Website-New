@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Veblen Group | Own the Market</title>
+  <meta name="description"
+    content="We build the systems, content, and strategy that turns your trade business into the name everyone knows." />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+</head>
+
+<body>
+
+  <!-- BACKGROUND AUDIO -->
+  <audio id="bg-audio" loop preload="auto">
+    <source src="assets/audio/rvstudio_the-ambient_main.wav" type="audio/wav">
+  </audio>
+
+  <!-- CUSTOM CURSOR -->
+  <div class="cursor"></div>
+  <div class="cursor-ring"></div>
+
+  <!-- FIXED BOTTOM CTA (always visible after intro) -->
+  <button type="button" class="fixed-cta" id="open-contact">
+    <span class="fixed-cta-btn">Contact Us</span>
+    <span class="fixed-cta-icon">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+      </svg>
+    </span>
+  </button>
+
+  <!-- CONTACT FORM MODAL -->
+  <div class="contact-overlay" id="contact-overlay">
+    <div class="contact-panel" id="contact-panel">
+      <button type="button" class="contact-close" id="close-contact">&times;</button>
+      <div class="contact-inner">
+        <div class="contact-title">Contact</div>
+        <form class="contact-form" id="contact-form">
+          <div class="contact-field">
+            <label>NAME</label>
+            <input type="text" placeholder="Type..." required />
+          </div>
+          <div class="contact-field">
+            <label>EMAIL</label>
+            <input type="email" placeholder="Email..." required />
+          </div>
+          <div class="contact-field">
+            <label>PHONE</label>
+            <input type="tel" placeholder="Phone..." />
+          </div>
+          <div class="contact-field">
+            <label>MESSAGE</label>
+            <input type="text" placeholder="How can we help..." />
+          </div>
+          <button type="submit" class="contact-submit">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor" />
+            </svg>
+          </button>
+        </form>
+        <div class="contact-privacy">
+          <input type="checkbox" id="privacy-check" />
+          <label for="privacy-check">BY SUBMITTING, YOU AGREE TO OUR <a href="#">PRIVACY POLICY</a></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       NAVBAR
+       ============================================ -->
+  <nav id="navbar">
+    <ul class="nav-links">
+      <li><a href="#" data-scroll-to="scene-hero">Home</a></li>
+      <li><a href="#" data-scroll-to="scene-intro-strip">Services</a></li>
+      <li><a href="#" data-scroll-to="scene-proof">Results</a></li>
+      <li><a href="#" data-scroll-to="scene-founder">About</a></li>
+      <li><a href="#" data-scroll-to="scene-system">Pricing</a></li>
+    </ul>
+
+    <!-- Logo: starts centred, moves into navbar on scroll -->
+    <a href="#" class="nav-logo" data-scroll-to="scene-hero">VEBLEN</a>
+
+    <div class="nav-contact">
+      <a href="tel:+61417111117">+61 417 111 117</a>
+      <a href="mailto:admin@veblengroup.com.au">admin@veblengroup.com.au</a>
+    </div>
+
+    <!-- Mobile hamburger -->
+    <button type="button" class="nav-burger" id="nav-burger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <!-- Mobile dropdown menu -->
+    <div class="mobile-menu" id="mobile-menu">
+      <ul class="mobile-menu-links">
+        <li><a href="#" data-scroll-to="scene-hero">Home</a></li>
+        <li><a href="#" data-scroll-to="scene-intro-strip">Services</a></li>
+        <li><a href="#" data-scroll-to="scene-proof">Results</a></li>
+        <li><a href="#" data-scroll-to="scene-founder">About</a></li>
+        <li><a href="#" data-scroll-to="scene-system">Pricing</a></li>
+      </ul>
+      <div class="mobile-menu-contact">
+        <a href="tel:+61417111117">+61 417 111 117</a>
+        <a href="mailto:hello@veblengroup.com.au">hello@veblengroup.com.au</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================================
+       SCENE 0 — INTRO ANIMATION
+       ============================================ -->
+  <div id="intro-scene">
+    <div class="intro-wordmark"><span>VEBLEN</span></div>
+    <div class="intro-tagline">Australian Growth Engine</div>
+  </div>
+
+  <!-- ============================================
+       HERO LOGO (big, centred, animates to navbar)
+       ============================================ -->
+  <div id="hero-logo">VEBLEN</div>
+
+  <!-- ============================================
+       MAIN SCROLL CONTENT
+       ============================================ -->
+  <main id="scroll-wrapper">
+
+    <!-- ==========================================
+         SCENE 1 — HERO
+         Dark skyscraper | "Own / the Market."
+         ========================================== -->
+    <section id="scene-hero" class="scene scene-dark">
+      <!-- Hero background video -->
+      <div class="hero-sequence-bg">
+        <video
+          id="hero-bg-video"
+          src="assets/sequence-1/intro door.mp4"
+          muted
+          playsinline
+          preload="auto"
+        ></video>
+      </div>
+      <div class="hero-amber-glow"></div>
+
+      <!-- Hero headline: 3 words, each positioned individually by JS -->
+      <span class="hero-word-el" id="hw-own"><span class="hero-changing-word" id="hero-changing-word">Own</span></span>
+      <span class="hero-word-el" id="hw-the">the</span>
+      <span class="hero-word-el" id="hw-market">Market.</span>
+
+
+      <!-- Scroll hint -->
+      <div class="hero-scroll-hint">
+        <div class="scroll-arrow"></div>
+        SCROLL TO START THE JOURNEY
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SCENE — DOOR PORTAL (scroll-driven sequence)
+         ========================================== -->
+    <section id="scene-door-portal"></section>
+
+  <!-- Fixed fullscreen canvas overlay for portal sequence -->
+  <canvas id="portal-canvas"></canvas>
+
+    <!-- ==========================================
+         FOOTER
+         Globe + GLOBAL text + contact
+         ========================================== -->
+    <footer id="footer">
+      <!-- Giant "GLOBAL" text behind globe -->
+      <div class="footer-global-text">GLOBAL</div>
+
+      <!-- Interactive Globe -->
+      <div class="footer-globe-wrap">
+        <canvas id="globe-canvas"></canvas>
+      </div>
+
+      <!-- Footer headline -->
+      <div class="footer-headline">
+        Get Your Free<br />Growth Roadmap
+      </div>
+
+      <!-- Footer nav links -->
+      <div class="footer-nav">
+        <a href="#" data-scroll-to="scene-hero">Home</a>
+        <a href="#" class="footer-book-link" id="open-contact-footer">Book A Call</a>
+      </div>
+
+      <!-- Contact meta -->
+      <div class="footer-meta">
+        <div class="footer-contact">
+          <a href="mailto:admin@veblengroup.com.au">admin@veblengroup.com.au</a>
+          <a href="tel:+61417111117">+61 417 111 117</a>
+        </div>
+        <div class="footer-right">
+          <div class="footer-inquiries">Veblen Group Pty Ltd</div>
+          <a href="mailto:admin@veblengroup.com.au" class="footer-cta-link">
+            Get Your Free Growth Roadmap →
+          </a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span class="footer-copy">©2026 Veblen Group. All rights reserved.</span>
+        <span class="footer-copy">Brisbane, Australia</span>
+      </div>
+    </footer>
+
+  </main><!-- /scroll-wrapper -->
+
+  <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/portal-sequence.js"></script>
+</body>
+
+</html>

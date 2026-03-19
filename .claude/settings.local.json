@@ -1,7 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx http-server:*)"
+      "Bash(npx http-server:*)",
+      "Bash(python -m http.server 8000)",
+      "Bash(cp:*)",
+      "Bash(python -m http.server 8080)",
+      "Bash(node:*)",
+      "Bash(ls \"C:\\\\Users\\\\hallu\\\\Documents\\\\GitHub\\\\veblen2-interactive-website\\\\assets\\\\p1\"\" 2>/dev/null || ls \"C:UsershalluDocumentsGitHubveblen2-interactive-websitep1\"\")",
+      "Bash(cp \"C:\\\\Users\\\\hallu\\\\Documents\\\\GitHub\\\\veblen2-interactive-website-backup9\\\\js\\\\portal-sequence.js\" \"C:\\\\Users\\\\hallu\\\\Documents\\\\GitHub\\\\veblen2-interactive-website\\\\js\\\\portal-sequence.js\")",
+      "Bash(cp \"C:\\\\Users\\\\hallu\\\\Documents\\\\GitHub\\\\veblen2-interactive-website-backup9\\\\css\\\\style.css\" \"C:\\\\Users\\\\hallu\\\\Documents\\\\GitHub\\\\veblen2-interactive-website\\\\css\\\\style.css\")",
+      "Bash(cp \"C:\\\\Users\\\\hallu\\\\Documents\\\\GitHub\\\\veblen2-interactive-website-backup9\\\\index.html\" \"C:\\\\Users\\\\hallu\\\\Documents\\\\GitHub\\\\veblen2-interactive-website\\\\index.html\")",
+      "Bash(ffprobe:*)",
+      "Bash(python:*)",
+      "Bash(git add:*)"
     ]
   }
 }
