@@ -663,7 +663,7 @@ body:hover .cursor { opacity: 1; }
   bottom: 8vh;
   left: clamp(24px, 5vw, 80px);
   z-index: 8001;
-  max-width: 420px;
+  max-width: 520px;
   pointer-events: none;
 }
 .hero-tagline-heading {
