@@ -144,28 +144,25 @@ body::after {
 }
 
 /* ---- CUSTOM CURSOR ---- */
+*, *::before, *::after {
+  cursor: none !important;
+}
 .cursor {
   position: fixed;
-  width: 8px; height: 8px;
-  background: var(--amber);
-  border-radius: 50%;
+  width: 28px; height: 28px;
+  background: url('../assets/cursor/V logo cursor 3.png') center/contain no-repeat;
   pointer-events: none;
   z-index: 99999;
-  transform: translate(-50%, -50%);
-  transition: width 0.2s, height 0.2s, background 0.2s;
-  mix-blend-mode: normal;
+  transform: translate(-4px, -1px);
+  transition: width 0.25s ease, height 0.25s ease;
+}
+.cursor.hover {
+  width: 42px;
+  height: 42px;
 }
 .cursor-ring {
-  position: fixed;
-  width: 36px; height: 36px;
-  border: 1px solid rgba(201,146,42,0.5);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 99998;
-  transform: translate(-50%, -50%);
-  transition: transform 0.12s var(--ease-smooth), width 0.3s, height 0.3s, border-color 0.3s;
+  display: none;
 }
-body:hover .cursor { opacity: 1; }
 
 /* Hide custom cursor on touch / mobile devices */
 @media (pointer: coarse), (max-width: 768px) {
@@ -240,7 +237,7 @@ body:hover .cursor { opacity: 1; }
   border: 1px solid rgba(255,255,255,0.18);
   border-radius: 60px;
   padding: 5px;
-  cursor: pointer;
+  cursor: none;
 }
 .fixed-cta-btn {
   display: flex;
@@ -439,7 +436,7 @@ body:hover .cursor { opacity: 1; }
   background: var(--black);
   color: var(--white);
   border: none;
-  cursor: pointer;
+  cursor: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -461,7 +458,7 @@ body:hover .cursor { opacity: 1; }
   width: 16px;
   height: 16px;
   accent-color: var(--amber);
-  cursor: pointer;
+  cursor: none;
 }
 .contact-privacy label {
   font-family: var(--font-display);
@@ -882,7 +879,7 @@ body:hover .cursor { opacity: 1; }
   background: none;
   border: none;
   color: var(--white-dim);
-  cursor: pointer;
+  cursor: none;
   padding: 4px;
   display: flex;
   align-items: center;
@@ -1421,7 +1418,7 @@ body:hover .cursor { opacity: 1; }
   overflow: visible;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
+  cursor: none;
   transition: opacity 0.8s ease, transform 0.8s ease, background 0.4s, border-color 0.4s, box-shadow 0.4s;
   opacity: 0;
   transform: translateY(40px);
@@ -1891,9 +1888,9 @@ body:hover .cursor { opacity: 1; }
   height: clamp(400px, 45vw, 700px);
   position: relative;
   z-index: 2;
-  cursor: grab;
+  cursor: none;
 }
-.footer-globe-wrap:active { cursor: grabbing; }
+.footer-globe-wrap:active { cursor: none; }
 
 #globe-canvas {
   width: 100%;
@@ -2013,7 +2010,7 @@ body:hover .cursor { opacity: 1; }
   display: none;
   background: none;
   border: none;
-  cursor: pointer;
+  cursor: none;
   padding: 8px;
   z-index: 10;
   position: relative;
@@ -2221,7 +2218,7 @@ body:hover .cursor { opacity: 1; }
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    cursor: none;
     transition: background 0.2s, border-color 0.2s;
   }
   .proof-arrow:active {

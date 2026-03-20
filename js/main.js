@@ -69,7 +69,7 @@ const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || window.i
 let mouseX = 0, mouseY = 0;
 let ringX = 0, ringY = 0;
 
-if (!isTouchDevice) {
+if (!isTouchDevice && cursor) {
   document.addEventListener('mousemove', e => {
     mouseX = e.clientX;
     mouseY = e.clientY;
@@ -77,28 +77,12 @@ if (!isTouchDevice) {
     cursor.style.top  = mouseY + 'px';
   });
 
-  (function animateRing() {
-    ringX += (mouseX - ringX) * 0.12;
-    ringY += (mouseY - ringY) * 0.12;
-    cursorRing.style.left = ringX + 'px';
-    cursorRing.style.top  = ringY + 'px';
-    requestAnimationFrame(animateRing);
-  })();
-
-  document.querySelectorAll('a, button, .tier, .who-item').forEach(el => {
+  document.querySelectorAll('a, button, .tier, .who-item, [onclick], .nav-links a, .sound-toggle, .fixed-cta').forEach(el => {
     el.addEventListener('mouseenter', () => {
-      cursor.style.width = '14px';
-      cursor.style.height = '14px';
-      cursorRing.style.width = '56px';
-      cursorRing.style.height = '56px';
-      cursorRing.style.borderColor = 'rgba(201,146,42,0.8)';
+      cursor.classList.add('hover');
     });
     el.addEventListener('mouseleave', () => {
-      cursor.style.width = '8px';
-      cursor.style.height = '8px';
-      cursorRing.style.width = '36px';
-      cursorRing.style.height = '36px';
-      cursorRing.style.borderColor = 'rgba(201,146,42,0.5)';
+      cursor.classList.remove('hover');
     });
   });
 }
@@ -356,7 +340,7 @@ function initLogoAnimation() {
   logo.style.pointerEvents = 'auto';
 
   // Copy nav logo click behavior
-  logo.style.cursor = 'pointer';
+  logo.style.cursor = 'none';
   logo.addEventListener('click', () => {
     lenis.scrollTo(0);
   });
