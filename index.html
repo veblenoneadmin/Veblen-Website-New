@@ -24,15 +24,24 @@
   <div class="cursor-ring"></div>
 
   <!-- FIXED BOTTOM CTA (always visible after intro) -->
-  <button type="button" class="fixed-cta" id="open-contact">
-    <span class="fixed-cta-btn">Contact Us</span>
-    <span class="fixed-cta-icon">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path
-          d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
-      </svg>
-    </span>
-  </button>
+  <div class="fixed-cta-wrap" id="fixed-cta-wrap">
+    <button type="button" class="fixed-cta" id="open-contact">
+      <span class="fixed-cta-x">&times;</span>
+      <span class="fixed-cta-btn">
+        <span class="fixed-cta-text" data-text="Contact Us">Contact Us</span>
+      </span>
+      <span class="fixed-cta-icon">
+        <span class="fixed-cta-icon-inner">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+          </svg>
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+          </svg>
+        </span>
+      </span>
+    </button>
+  </div>
 
   <!-- CONTACT FORM MODAL -->
   <div class="contact-overlay" id="contact-overlay">
@@ -77,9 +86,9 @@
   <nav id="navbar">
     <ul class="nav-links">
       <li><a href="#" data-scroll-to="scene-hero" data-text="Home"><span>Home</span></a></li>
+      <li><a href="#" data-scroll-to="scene-scroll-text" data-text="About"><span>About</span></a></li>
       <li><a href="#" data-scroll-to="scene-intro-strip" data-text="Services"><span>Services</span></a></li>
       <li><a href="#" data-scroll-to="scene-proof" data-text="Results"><span>Results</span></a></li>
-      <li><a href="#" data-scroll-to="scene-founder" data-text="About"><span>About</span></a></li>
       <li><a href="#" data-scroll-to="scene-system" data-text="Pricing"><span>Pricing</span></a></li>
     </ul>
 
@@ -158,6 +167,10 @@
       <div class="hero-scroll-hint">
         <div class="scroll-arrow"></div>
         SCROLL TO START THE JOURNEY
+        <button type="button" class="sound-toggle" id="sound-toggle" aria-label="Toggle sound">
+          <svg class="sound-on" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          <svg class="sound-off" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+        </button>
       </div>
     </section>
 
@@ -169,6 +182,49 @@
   <!-- Fixed fullscreen image overlay for portal sequence -->
   <img id="portal-frame" alt="" />
   <canvas id="portal-canvas"></canvas>
+
+    <!-- ==========================================
+         SCENE — SCROLL TEXT (sequence-4 background)
+         ========================================== -->
+    <section id="scene-scroll-text"></section>
+
+  <!-- Fixed fullscreen canvas for scroll sequence -->
+  <canvas id="scroll-canvas"></canvas>
+
+  <!-- Fixed scroll-reveal text -->
+  <div class="scroll-reveal-text" id="scroll-reveal-text">
+    <div class="scroll-reveal-inner" id="scroll-reveal-inner">
+      <p class="scroll-reveal-words">Veblen Group is an award-winning growth agency built for brands in Trade, Construction, Civil, Real Estate, B2C, B2B and beyond. From systemised content and full-funnel ads to CRM automation and sales infrastructure, we've helped clients scale from $500K to $3-6M+, achieve 30x ROAS, and lift profitability to 20% in as little as 90 days.</p>
+
+      <div class="scroll-features">
+        <div class="scroll-features-left">
+          <img src="assets/logo&copy1/logo & emblem (white).png" alt="Veblen Group" class="scroll-features-logo" />
+          <div class="scroll-features-meta">
+            <span class="scroll-features-by">BY ZAC MACANALLY</span>
+            <span class="scroll-features-est">2022</span>
+          </div>
+        </div>
+        <div class="scroll-features-grid">
+          <div class="scroll-feature-card">
+            <h3>Access to Growth<br>Infrastructure</h3>
+            <p>Skip the guesswork and plug straight<br>into a proven system.<br>Veblen builds the strategy, the content,<br>and the campaigns from day one.<br>Every engagement starts with a clear plan<br>and ends with measurable results.</p>
+          </div>
+          <div class="scroll-feature-card">
+            <h3>Content That<br>Commands Attention</h3>
+            <p>From scroll-stopping social content to full-scale<br>video production with VFX and 3D motion graphics,<br>we produce assets that make your brand<br>impossible to ignore. Content built to perform,<br>not just look good.</p>
+          </div>
+          <div class="scroll-feature-card">
+            <h3>Advertising That<br>Pays for Itself</h3>
+            <p>Google Ads, Meta campaigns, SEO,<br>and retargeting funnels built to convert<br>browsers into buyers. We've delivered up to<br>30x ROAS because every dollar is tracked,<br>tested, and optimised weekly.</p>
+          </div>
+          <div class="scroll-feature-card">
+            <h3>Automation and<br>Systems That Scale</h3>
+            <p>CRM setup, workflow automation,<br>and data tracking that connect every part<br>of your marketing engine. We've saved clients<br>hundreds of thousands in wages by replacing<br>manual chaos with intelligent systems.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
     <!-- ==========================================
          FOOTER
@@ -219,6 +275,7 @@
   <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
   <script src="js/main.js"></script>
   <script src="js/portal-sequence.js"></script>
+  <script src="js/scroll-sequence.js"></script>
 </body>
 
 </html>

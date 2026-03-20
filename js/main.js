@@ -9,17 +9,34 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 /* ---- BACKGROUND AUDIO ---- */
 (function initBgAudio() {
   const audio = document.getElementById('bg-audio');
+  const btn = document.getElementById('sound-toggle');
   if (!audio) return;
   audio.volume = 0.4;
   let started = false;
+  let muted = false;
+
+  function updateIcon() {
+    if (!btn) return;
+    btn.querySelector('.sound-on').style.display = muted ? 'none' : 'block';
+    btn.querySelector('.sound-off').style.display = muted ? 'block' : 'none';
+  }
 
   function tryPlay() {
     if (started) return;
     audio.play().then(() => {
       started = true;
     }).catch(() => {
-      // Browser blocked — will retry on interaction
       started = false;
+    });
+  }
+
+  if (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      muted = !muted;
+      audio.muted = muted;
+      updateIcon();
+      if (!started) tryPlay();
     });
   }
 
@@ -169,7 +186,7 @@ setTimeout(() => {
 
     // Show fixed CTA
     setTimeout(() => {
-      document.querySelector('.fixed-cta').classList.add('visible');
+      document.querySelector('.fixed-cta-wrap').classList.add('visible');
     }, 800);
     // Init logo animation
     initLogoAnimation();
@@ -844,6 +861,31 @@ document.querySelectorAll('.proof-number[data-target]').forEach(el => {
   document.body.appendChild(grain);
 })();
 
+/* ---- CTA TEXT TWIST ---- */
+(function initCtaTwist() {
+  var el = document.querySelector('.fixed-cta-text');
+  if (!el) return;
+  var text = el.getAttribute('data-text') || el.textContent;
+  el.textContent = '';
+  text.split('').forEach(function(ch, i) {
+    var wrap = document.createElement('span');
+    wrap.className = 'char-wrap';
+    var inner = document.createElement('span');
+    inner.className = 'char-inner';
+    inner.style.transitionDelay = (i * 0.03) + 's';
+    var top = document.createElement('span');
+    top.className = 'char-top';
+    top.textContent = ch === ' ' ? '\u00A0' : ch;
+    var bot = document.createElement('span');
+    bot.className = 'char-bot';
+    bot.textContent = ch === ' ' ? '\u00A0' : ch;
+    inner.appendChild(top);
+    inner.appendChild(bot);
+    wrap.appendChild(inner);
+    el.appendChild(wrap);
+  });
+})();
+
 /* ---- CONTACT FORM MODAL ---- */
 const openBtn = document.getElementById('open-contact');
 const overlay = document.getElementById('contact-overlay');
@@ -855,24 +897,49 @@ document.querySelectorAll('#open-contact-hero, #open-contact-footer, #open-conta
   if (btn && overlay) {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      overlay.classList.add('active');
+      openForm();
     });
   }
 });
 
+var ctaWrap = document.getElementById('fixed-cta-wrap');
+
+function openForm() {
+  overlay.classList.add('active');
+  if (ctaWrap) {
+    ctaWrap.classList.add('form-open');
+    // Position above the panel
+    var panelH = panel.offsetHeight;
+    var panelBottomGap = parseFloat(getComputedStyle(panel).bottom) || 16;
+    ctaWrap.style.bottom = (panelH + panelBottomGap + 16) + 'px';
+  }
+}
+
+function closeForm() {
+  overlay.classList.remove('active');
+  if (ctaWrap) {
+    ctaWrap.classList.remove('form-open');
+    ctaWrap.style.bottom = '32px';
+  }
+}
+
 if (openBtn && overlay) {
   openBtn.addEventListener('click', () => {
-    overlay.classList.add('active');
+    if (ctaWrap && ctaWrap.classList.contains('form-open')) {
+      closeForm();
+    } else {
+      openForm();
+    }
   });
 
-  closeBtn.addEventListener('click', () => {
-    overlay.classList.remove('active');
-  });
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => { closeForm(); });
+  }
 
   // Close when clicking outside the panel
   overlay.addEventListener('click', (e) => {
     if (!panel.contains(e.target)) {
-      overlay.classList.remove('active');
+      closeForm();
     }
   });
 
