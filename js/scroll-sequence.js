@@ -16,6 +16,7 @@
   var FRAMES_PER_RAF = 3;
 
   var section, textEl, words, featuresEl;
+  var servicesTitleWrap, servicesHero;
 
   function drawCover(img) {
     var sc = Math.max(W / img.naturalWidth, H / img.naturalHeight);
@@ -80,14 +81,17 @@
     }
   }
 
+  var cachedH = 0;
   function updateScroll() {
     if (!ready || !section) return;
+    // Skip heavy work when zipper is active — about canvas is hidden behind it
+    if (window._zipperActive) return;
 
     var rect = section.getBoundingClientRect();
     var winH = window.innerHeight;
     // Show canvas slightly early to overlap with portal canvas hiding
-    var canvasInView = rect.top < winH + 100 && rect.bottom > 0;
-    var inView = rect.top < winH && rect.bottom > 0;
+    var canvasInView = rect.top < winH + 100 && rect.bottom > -winH;
+    var inView = rect.top < winH && rect.bottom > -winH;
 
     if (!canvasInView) {
       hideCanvas();
@@ -106,9 +110,9 @@
     if (current === -1) drawFrame(0);
     if (inView) showText();
 
-    var scrolled = winH - rect.top; // starts counting when section enters viewport
-    var maxScroll = section.offsetHeight;
-    var p = maxScroll > 0 ? scrolled / maxScroll : 0;
+    var scrolled = winH - rect.top;
+    if (!cachedH) cachedH = section.offsetHeight;
+    var p = cachedH > 0 ? scrolled / cachedH : 0;
     p = p < 0 ? 0 : p > 1 ? 1 : p;
 
     // Drive frames — linear mapping
@@ -123,7 +127,7 @@
     var wordsOpacity = p < 0.01 ? 0 : 1;
     var innerEl = document.getElementById('scroll-reveal-inner');
     if (innerEl) {
-      innerEl.style.transform = 'translateY(' + textY + 'px)';
+      innerEl.style.transform = 'translate3d(0,' + textY + 'px,0)';
       innerEl.style.opacity = wordsOpacity;
     }
 
@@ -135,6 +139,26 @@
         words[i].classList.add('revealed');
       } else {
         words[i].classList.remove('revealed');
+      }
+    }
+
+    // ---- "BUILT TO / DOMINATE" entrance ----
+    // Scrolls up from below into center, pins — always runs, zipper updateTexts overrides when active
+    if (servicesTitleWrap && servicesHero) {
+      var sEnter = 0.25;  // starts entering from bottom
+      var sPin   = 0.35;  // reaches center, pins
+
+      if (p < sEnter) {
+        servicesTitleWrap.style.opacity = '0';
+      } else if (p <= sPin) {
+        servicesTitleWrap.style.opacity = '1';
+        var enterP = (p - sEnter) / (sPin - sEnter);
+        var yOffset = (1 - enterP) * winH;
+        servicesHero.style.transform = 'translate3d(0,' + yOffset + 'px,0)';
+      } else if (!window._zipperActive && servicesTitleWrap.style.visibility !== 'hidden') {
+        // Pinned at center until zipper takes over
+        servicesTitleWrap.style.opacity = '1';
+        servicesHero.style.transform = 'translate3d(0,0,0)';
       }
     }
 
@@ -171,6 +195,8 @@
     textEl = document.getElementById('scroll-reveal-text');
     featuresEl = document.getElementById('scroll-features');
     section = document.getElementById('scene-scroll-text');
+    servicesTitleWrap = document.getElementById('services-title-wrap');
+    servicesHero = document.getElementById('services-hero');
     if (!canvas || !textEl || !section) return;
     ctx = canvas.getContext('2d');
 

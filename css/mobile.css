@@ -1,0 +1,269 @@
+/* ============================================
+   MOBILE-ONLY STYLES (≤ 900px)
+   This file ONLY loads on mobile devices.
+   Changes here do NOT affect desktop.
+   ============================================ */
+
+/* ---- GENERAL ---- */
+body {
+  cursor: auto;
+}
+.cursor, .cursor-ring {
+  display: none !important;
+}
+
+/* ---- NAVBAR ---- */
+#navbar {
+  padding: 0 20px;
+  height: 60px;
+}
+.nav-links { display: none; }
+.nav-contact { display: none; }
+.nav-burger { display: block; }
+.mobile-menu { display: block; }
+.nav-logo {
+  font-size: 14px !important;
+  letter-spacing: 0.15em;
+}
+
+/* ---- HERO ---- */
+.hero-word-el {
+  font-size: clamp(36px, 12vw, 70px);
+}
+#hw-own {
+  top: 25vh;
+  left: 5vw;
+}
+#hw-the {
+  top: auto;
+  bottom: 34vh;
+  right: 5vw;
+}
+#hw-market {
+  top: auto;
+  bottom: 28vh;
+  right: 5vw;
+}
+.hero-tagline {
+  bottom: 10vh !important;
+  left: 5vw !important;
+  right: 5vw !important;
+}
+.hero-tagline-heading {
+  font-size: clamp(14px, 4vw, 20px) !important;
+}
+.hero-tagline-body {
+  font-size: clamp(10px, 2.5vw, 13px) !important;
+}
+.hero-tagline-logos svg {
+  height: 14px !important;
+}
+
+/* ---- HIDE scroll hint + sound toggle on mobile ---- */
+.hero-scroll-hint {
+  display: none !important;
+}
+.sound-toggle {
+  display: none !important;
+}
+
+/* ---- CANVAS SEQUENCES — hide heavy desktop canvases ---- */
+#portal-canvas,
+#portal-frame {
+  /* Portal still works but at mobile resolution */
+}
+#scroll-canvas {
+  /* About background canvas stays */
+}
+#zipper-canvas {
+  /* Zipper canvas — mobile-overrides.js handles lighter frames */
+}
+
+/* ---- ABOUT TEXT ---- */
+.scroll-reveal-words {
+  font-size: clamp(20px, 6vw, 36px);
+  max-width: 100%;
+}
+.scroll-reveal-text {
+  left: 20px;
+  right: 20px;
+}
+
+/* ---- ABOUT FEATURES ---- */
+.scroll-features {
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+.scroll-features-left {
+  gap: 16px;
+}
+.scroll-features-logo {
+  width: 60px;
+}
+.scroll-features-by,
+.scroll-features-est {
+  font-size: 12px;
+}
+.scroll-features-grid {
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+.scroll-feature-card h3 {
+  font-size: clamp(20px, 5vw, 28px);
+}
+.scroll-feature-card p {
+  font-size: 13px;
+}
+
+/* ---- SERVICES TITLE ---- */
+.services-title-wrap {
+  left: 20px;
+  right: 20px;
+}
+.services-title-main {
+  font-size: clamp(36px, 10vw, 60px);
+}
+.services-title-sub {
+  font-size: clamp(12px, 3vw, 16px);
+}
+
+/* ---- GROWTH SYSTEM ---- */
+.growth-system-wrap {
+  left: 20px;
+  right: 20px;
+}
+.growth-system-title {
+  font-size: clamp(20px, 6vw, 32px);
+}
+.growth-stage h3 {
+  font-size: 13px;
+}
+.growth-stage p {
+  font-size: 12px;
+}
+
+/* ---- RESULTS ACCORDION ---- */
+.results-wrap {
+  padding: 0 20px;
+}
+.results-content {
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 10vh;
+}
+.results-left {
+  flex: 1;
+  max-width: 100%;
+}
+.results-right {
+  width: 100%;
+  justify-content: center;
+}
+.results-image-wrap {
+  width: 100%;
+  height: 40vh;
+}
+.results-item-title {
+  font-size: clamp(18px, 5vw, 24px);
+}
+.results-item-body p {
+  font-size: 13px;
+  max-width: 100%;
+}
+
+/* ---- PRICING & FOOTER SPACING ---- */
+.results-pricing-spacer {
+  height: 450vh;
+}
+/* ---- PRICING ---- */
+.pricing-section {
+  padding: clamp(40px, 6vh, 80px) 0;
+}
+.pricing-headline {
+  font-size: clamp(24px, 7vw, 36px);
+}
+.pricing-grid {
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.pricing-card {
+  max-width: 100%;
+  width: 100%;
+  min-height: auto;
+}
+.pricing-price {
+  font-size: clamp(24px, 7vw, 32px);
+}
+.pricing-popular-pill {
+  font-size: 9px;
+}
+
+/* ---- CONTACT SECTION ---- */
+.contact-headline {
+  font-size: clamp(18px, 5vw, 28px);
+}
+.contact-headline-bold {
+  font-size: clamp(28px, 8vw, 48px);
+}
+.contact-buttons {
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.contact-btn {
+  width: 100%;
+  max-width: 300px;
+  text-align: center;
+  justify-content: center;
+}
+
+/* ---- FOOTER ---- */
+#footer {
+  padding: 40px 20px;
+}
+.footer-globe-wrap {
+  width: 280px;
+  height: 280px;
+}
+.footer-headline {
+  font-size: clamp(28px, 8vw, 48px);
+}
+.footer-meta {
+  flex-direction: column;
+  gap: 24px;
+  align-items: flex-start;
+}
+.footer-right {
+  text-align: left;
+}
+.footer-contact a {
+  font-size: clamp(16px, 5vw, 22px);
+}
+.footer-bottom {
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+}
+
+/* ---- FIXED CTA ---- */
+.fixed-cta {
+  bottom: 16px;
+}
+.fixed-cta-text {
+  display: block !important;
+  font-size: 11px;
+}
+.fixed-cta-btn {
+  padding: 10px 20px;
+}
+.fixed-cta-icon {
+  width: 36px;
+  height: 36px;
+}
+
+/* ---- CONTACT FORM ---- */
+.contact-panel {
+  width: 90vw;
+  max-width: 400px;
+}

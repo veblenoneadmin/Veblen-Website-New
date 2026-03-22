@@ -4,7 +4,17 @@
 
 /* ---- ALWAYS START FROM TOP ON REFRESH ---- */
 window.scrollTo(0, 0);
+
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+/* ---- GLOBAL SCROLL HELPER ---- */
+function smoothScrollTo(targetPos) {
+  if (typeof lenis !== 'undefined' && lenis && lenis.scrollTo) {
+    lenis.scrollTo(targetPos, { offset: 0 });
+  } else {
+    window.scrollTo({ top: Math.max(0, targetPos), behavior: 'smooth' });
+  }
+}
 
 /* ---- BACKGROUND AUDIO ---- */
 (function initBgAudio() {
@@ -51,7 +61,7 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 /* ---- SMOOTH SCROLL (Lenis — fixes Windows wheel jumping) ---- */
 const lenis = new Lenis({
-  duration: 1.2,
+  duration: 0.6,
   easing: function(t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
   touchMultiplier: 2,
   infinite: false,
@@ -83,6 +93,16 @@ if (!isTouchDevice && cursor) {
     });
     el.addEventListener('mouseleave', () => {
       cursor.classList.remove('hover');
+    });
+  });
+
+  // Cursor inverts back to white on dark elements (pricing cards, footer)
+  document.querySelectorAll('.pricing-card, #footer').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.classList.add('dark-hover');
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.classList.remove('dark-hover');
     });
   });
 }
@@ -335,14 +355,20 @@ function initLogoAnimation() {
   const navLogo = document.querySelector('.nav-logo');
 
   // Hide the static nav logo — the hero logo becomes the nav logo
-  navLogo.style.display = 'none';
+  navLogo.style.visibility = 'hidden';
   logo.style.transition = 'none';
   logo.style.pointerEvents = 'auto';
 
-  // Copy nav logo click behavior
+  // Both logos scroll to top on click
   logo.style.cursor = 'none';
-  logo.addEventListener('click', () => {
-    lenis.scrollTo(0);
+  logo.addEventListener('click', function(e) {
+    e.preventDefault();
+    smoothScrollTo(0);
+  });
+  navLogo.style.pointerEvents = 'auto';
+  navLogo.addEventListener('click', function(e) {
+    e.preventDefault();
+    smoothScrollTo(0);
   });
 
   // Start & end values — recalculated on resize
@@ -407,13 +433,31 @@ window.addEventListener('scroll', () => {
     if (fixedCta && rect.top < viewH - 40 && rect.bottom > viewH - 100) ctaOverLight = true;
   });
 
-  const heroLogo = document.getElementById('hero-logo');
-  if (overLight) {
+  // Also check zipper canvas — light when past frame 900
+  if (window._zipperFrame !== undefined && window._zipperFrame > 900) overLight = true;
+
+  // Check if footer is at top of viewport — dark bg, switch back to white
+  if (!navbar._footerEl) navbar._footerEl = document.getElementById('footer');
+  var onFooter = false;
+  if (navbar._footerEl) {
+    var fRect = navbar._footerEl.getBoundingClientRect();
+    if (fRect.top < 100 && fRect.bottom > 0) {
+      overLight = false;
+      onFooter = true;
+    }
+  }
+
+  if (!navbar._heroLogo) navbar._heroLogo = document.getElementById('hero-logo');
+  if (!navbar._cursorEl) navbar._cursorEl = document.querySelector('.cursor');
+  var wasLight = navbar.classList.contains('light-mode');
+  if (overLight && !wasLight) {
     navbar.classList.add('light-mode');
-    if (heroLogo) heroLogo.style.color = 'var(--black)';
-  } else {
+    if (navbar._heroLogo) navbar._heroLogo.style.color = 'var(--black)';
+    if (navbar._cursorEl) navbar._cursorEl.classList.add('light-mode');
+  } else if (!overLight && wasLight) {
     navbar.classList.remove('light-mode');
-    if (heroLogo) heroLogo.style.color = 'var(--white)';
+    if (navbar._heroLogo) navbar._heroLogo.style.color = 'var(--white)';
+    if (navbar._cursorEl) navbar._cursorEl.classList.remove('light-mode');
   }
 
   if (fixedCta) {
@@ -512,21 +556,27 @@ window.addEventListener('scroll', () => {
 document.querySelectorAll('[data-scroll-to]').forEach(link => {
   link.addEventListener('click', e => {
     e.preventDefault();
-    // Stop propagation so nested [data-scroll-to] elements (e.g. tier-cta
-    // inside a tier card) don't fire twice
-    e.stopPropagation();
-    const target = document.getElementById(link.dataset.scrollTo);
-    if (target) {
-      // Release any fixed-position sections before scrolling
-      target.style.position = '';
-      target.style.top = '';
-      target.style.left = '';
-      target.style.width = '';
-      target.style.zIndex = '';
-      target.style.transform = '';
-      target.style.opacity = '';
-      target.style.transformOrigin = '';
-      lenis.scrollTo(target, { offset: 0 });
+    var targetId = link.dataset.scrollTo;
+
+    // Home / scene-hero = just scroll to top
+    if (targetId === 'scene-hero') {
+      smoothScrollTo(0);
+      return;
+    }
+
+    var target = document.getElementById(targetId);
+    if (!target) return;
+
+    var scrollP = link.getAttribute('data-scroll-p');
+    if (scrollP) {
+      var p = parseFloat(scrollP);
+      var sectionTop = target.getBoundingClientRect().top + window.scrollY;
+      var sectionH = target.offsetHeight;
+      var scrollTarget = sectionTop + p * sectionH - window.innerHeight;
+      smoothScrollTo(scrollTarget);
+    } else {
+      var elTop = target.getBoundingClientRect().top + window.scrollY;
+      smoothScrollTo(elTop);
     }
   });
 });
@@ -877,7 +927,7 @@ const panel   = document.getElementById('contact-panel');
 const closeBtn = document.getElementById('close-contact');
 
 // Also wire up hero and footer contact buttons
-document.querySelectorAll('#open-contact-hero, #open-contact-footer, #open-contact-nav').forEach(btn => {
+document.querySelectorAll('#open-contact-hero, #open-contact-footer, #open-contact-nav, #open-contact-main, #open-contact-mobile, #pricing-cta-1, #pricing-cta-2, #pricing-cta-3, .pricing-card').forEach(btn => {
   if (btn && overlay) {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
