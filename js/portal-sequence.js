@@ -39,7 +39,11 @@
   }
 
   function showCanvas() {
-    if (!canvasVisible) { canvas.style.opacity = '1'; canvasVisible = true; }
+    if (!canvasVisible) {
+      canvas.style.opacity = '1'; canvasVisible = true;
+      var b = document.querySelector('.portal-bridge');
+      if (b) b.style.visibility = 'visible';
+    }
   }
 
   function hideCanvas() {
@@ -206,7 +210,7 @@
       (function (idx) {
         var num = 8174 + idx;
         var img = new Image();
-        img.src = 'assets/sequence-2/door3/inside0010' + num + '.jpg';
+        img.src = 'assets/sequence-2/door3/inside0010' + num + '.webp';
         img.onload = function () {
           if (++loaded === TOTAL) { ready = true; updateTarget(); }
         };

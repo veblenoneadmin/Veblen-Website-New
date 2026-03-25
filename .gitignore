@@ -1,0 +1,22 @@
+# Screenshot/debug folders
+assets/p*/
+assets/nav/
+
+# Backup files
+*.backup.*
+css/style.backup.js
+
+# Unused assets
+assets/About-bg/
+assets/Services-bg/
+assets/Results-bg/
+assets/Pricing-bg/
+assets/Contact-bg/
+assets/i1/
+assets/result-pic/
+assets/sequence-6/
+
+# System
+.DS_Store
+Thumbs.db
+.claude/

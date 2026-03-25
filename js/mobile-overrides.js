@@ -12,8 +12,7 @@
     lenis.destroy();
   }
 
-  // Future: swap zipper frames to mobile-optimized versions
-  // e.g., load zip-mobile/ folder with 720p frames, or fewer frames
-  // For now, the desktop frames will still load but mobile CSS handles layout
+  // Disable globe — stop Three.js rendering on mobile
+  window._mobileDisableGlobe = true;
 
 })();

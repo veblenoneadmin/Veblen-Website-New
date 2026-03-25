@@ -1,245 +1,122 @@
 /* ============================================
-   SCROLL TEXT SEQUENCE (sequence-4)
-   — 471 scroll-driven frames + word-by-word text reveal
+   Results accordion + Services reveal animations
    ============================================ */
 (function () {
-  var TOTAL = 141;
-  var images = [], loaded = 0, ready = false, current = -1;
-  var canvas, ctx, W, H;
-  var canvasVisible = false;
-  var textVisible = false;
-
-  // Burst playback
-  var targetFrame = 0;
-  var displayFrame = 0;
-  var burstRunning = false;
-  var FRAMES_PER_RAF = 3;
-
-  var section, textEl, words, featuresEl;
-  var servicesTitleWrap, servicesHero;
-
-  function drawCover(img) {
-    var sc = Math.max(W / img.naturalWidth, H / img.naturalHeight);
-    var dw = Math.ceil(img.naturalWidth * sc);
-    var dh = Math.ceil(img.naturalHeight * sc);
-    var dx = Math.floor((W - dw) / 2);
-    var dy = Math.floor((H - dh) / 2);
-    ctx.drawImage(img, dx, dy, dw, dh);
-  }
-
-  function drawFrame(idx) {
-    idx = Math.max(0, Math.min(idx, TOTAL - 1));
-    if (idx === current) return;
-    current = idx;
-    var img = images[idx];
-    if (!img || !img.complete || !img.naturalWidth) return;
-    ctx.clearRect(0, 0, W, H);
-    drawCover(img);
-  }
-
-  function showCanvas() {
-    if (!canvasVisible) { canvas.style.opacity = '1'; canvasVisible = true; }
-  }
-  function hideCanvas() {
-    if (canvasVisible) { canvas.style.opacity = '0'; canvasVisible = false; }
-  }
-  function showText() {
-    if (!textVisible) { textEl.style.opacity = '1'; textVisible = true; }
-  }
-  function hideText() {
-    if (textVisible) { textEl.style.opacity = '0'; textVisible = false; }
-  }
-
-  function burstLoop() {
-    if (!ready) { burstRunning = false; return; }
-    var remaining = targetFrame - displayFrame;
-    if (Math.abs(remaining) < 0.5) {
-      displayFrame = targetFrame;
-      drawFrame(Math.round(displayFrame));
-      burstRunning = false;
-      return;
-    }
-    var dir = remaining > 0 ? 1 : -1;
-    var steps = Math.min(FRAMES_PER_RAF, Math.abs(Math.round(remaining)));
-    for (var i = 0; i < steps; i++) {
-      displayFrame += dir;
-      drawFrame(Math.round(displayFrame));
-    }
-    if (Math.abs(targetFrame - displayFrame) > 0.5) {
-      requestAnimationFrame(burstLoop);
-    } else {
-      displayFrame = targetFrame;
-      drawFrame(Math.round(displayFrame));
-      burstRunning = false;
-    }
-  }
-
-  function startBurst() {
-    if (!burstRunning) {
-      burstRunning = true;
-      requestAnimationFrame(burstLoop);
-    }
-  }
-
-  var cachedH = 0;
-  function updateScroll() {
-    if (!ready || !section) return;
-    // Skip heavy work when zipper is active — about canvas is hidden behind it
-    if (window._zipperActive) return;
-
-    var rect = section.getBoundingClientRect();
-    var winH = window.innerHeight;
-    // Show canvas slightly early to overlap with portal canvas hiding
-    var canvasInView = rect.top < winH + 100 && rect.bottom > -winH;
-    var inView = rect.top < winH && rect.bottom > -winH;
-
-    if (!canvasInView) {
-      hideCanvas();
-      hideText();
-      // Reset word reveals when scrolling back up
-      if (rect.top >= winH && words) {
-        for (var i = 0; i < words.length; i++) {
-          words[i].classList.remove('revealed');
-        }
-      }
-      return;
-    }
-
-    showCanvas();
-    // Draw frame 0 immediately if nothing drawn yet
-    if (current === -1) drawFrame(0);
-    if (inView) showText();
-
-    var scrolled = winH - rect.top;
-    if (!cachedH) cachedH = section.offsetHeight;
-    var p = cachedH > 0 ? scrolled / cachedH : 0;
-    p = p < 0 ? 0 : p > 1 ? 1 : p;
-
-    // Drive frames — linear mapping
-    targetFrame = p * (TOTAL - 1);
-    startBurst();
-
-    // Move text — starts at bottom of viewport, scrolls up
-    var textTravel = window.innerHeight * 8;
-    var textStart = window.innerHeight * 1.05;
-    var textY = textStart - (p * textTravel);
-    // Hide text until scrolling starts
-    var wordsOpacity = p < 0.01 ? 0 : 1;
-    var innerEl = document.getElementById('scroll-reveal-inner');
-    if (innerEl) {
-      innerEl.style.transform = 'translate3d(0,' + textY + 'px,0)';
-      innerEl.style.opacity = wordsOpacity;
-    }
-
-    // Drive word reveal — based on scroll progress
-    var textP = Math.min(p / 0.12, 1);
-    var revealCount = Math.floor(textP * words.length);
-    for (var i = 0; i < words.length; i++) {
-      if (i < revealCount) {
-        words[i].classList.add('revealed');
-      } else {
-        words[i].classList.remove('revealed');
-      }
-    }
-
-    // ---- "BUILT TO / DOMINATE" entrance ----
-    // Scrolls up from below into center, pins — always runs, zipper updateTexts overrides when active
-    if (servicesTitleWrap && servicesHero) {
-      var sEnter = 0.25;  // starts entering from bottom
-      var sPin   = 0.35;  // reaches center, pins
-
-      if (p < sEnter) {
-        servicesTitleWrap.style.opacity = '0';
-      } else if (p <= sPin) {
-        servicesTitleWrap.style.opacity = '1';
-        var enterP = (p - sEnter) / (sPin - sEnter);
-        var yOffset = (1 - enterP) * winH;
-        servicesHero.style.transform = 'translate3d(0,' + yOffset + 'px,0)';
-      } else if (!window._zipperActive && servicesTitleWrap.style.visibility !== 'hidden') {
-        // Pinned at center until zipper takes over
-        servicesTitleWrap.style.opacity = '1';
-        servicesHero.style.transform = 'translate3d(0,0,0)';
-      }
-    }
-
-  }
-
-  function sizeCanvas() {
-    W = canvas.clientWidth;
-    H = canvas.clientHeight;
-    canvas.width = W;
-    canvas.height = H;
-    current = -1;
-  }
-
-  function wrapWords() {
-    var container = document.querySelector('.scroll-reveal-words');
-    if (!container) return;
-    var text = container.textContent.trim();
-    container.innerHTML = '';
-    var allWords = text.split(/\s+/);
-    for (var i = 0; i < allWords.length; i++) {
-      var span = document.createElement('span');
-      span.className = 'sw';
-      span.textContent = allWords[i];
-      container.appendChild(span);
-      if (i < allWords.length - 1) {
-        container.appendChild(document.createTextNode(' '));
-      }
-    }
-    words = container.querySelectorAll('.sw');
-  }
-
   function init() {
-    canvas = document.getElementById('scroll-canvas');
-    textEl = document.getElementById('scroll-reveal-text');
-    featuresEl = document.getElementById('scroll-features');
-    section = document.getElementById('scene-scroll-text');
-    servicesTitleWrap = document.getElementById('services-title-wrap');
-    servicesHero = document.getElementById('services-hero');
-    if (!canvas || !textEl || !section) return;
-    ctx = canvas.getContext('2d');
-
-    sizeCanvas();
-    window.addEventListener('resize', function () {
-      sizeCanvas();
-      if (ready) updateScroll();
-    });
-
-    // Wrap words in spans
-    wrapWords();
-
-    // Preload frames
-    for (var i = 0; i < TOTAL; i++) {
-      (function (idx) {
-        var num = String(idx).padStart(3, '0');
-        var img = new Image();
-        img.src = 'assets/sequence-6/scroll4_00108' + num + '.jpg';
-        img.onload = function () {
-          if (++loaded === TOTAL) { ready = true; updateScroll(); }
-        };
-        images[idx] = img;
-      })(i);
+    // ---- Services auto-scroll seamless loop ----
+    var scrollInner = document.querySelector('.services-scroll-inner');
+    if (scrollInner) {
+      // Get all original items (first 10)
+      var allItems = scrollInner.querySelectorAll('li');
+      var originalCount = allItems.length / 2;
+      // Measure height of original set
+      var totalH = 0;
+      for (var s = 0; s < originalCount; s++) {
+        totalH += allItems[s].offsetHeight + parseFloat(getComputedStyle(allItems[s]).paddingTop) + parseFloat(getComputedStyle(allItems[s]).paddingBottom);
+      }
+      // Set animation duration based on height for consistent speed
+      var speed = 30; // pixels per second
+      var duration = totalH / speed;
+      scrollInner.style.animation = 'none';
+      scrollInner.offsetHeight; // force reflow
+      scrollInner.style.animation = 'servicesScroll ' + duration + 's linear infinite';
     }
 
-    // Listen to scroll
-    window.addEventListener('scroll', updateScroll, { passive: true });
-    if (typeof lenis !== 'undefined') {
-      lenis.on('scroll', updateScroll);
-    } else {
-      var check = setInterval(function () {
-        if (typeof lenis !== 'undefined') {
-          lenis.on('scroll', updateScroll);
-          clearInterval(check);
+    // ---- Contact floating shapes ----
+    var shapes = document.querySelectorAll('.elegant-shape');
+    if (shapes.length) {
+      var contactObs = new IntersectionObserver(function (entries) {
+        if (entries[0].isIntersecting) {
+          for (var s = 0; s < shapes.length; s++) {
+            shapes[s].style.animationPlayState = 'running';
+          }
+          // Add continuous float after entry
+          setTimeout(function () {
+            for (var s = 0; s < shapes.length; s++) {
+              shapes[s].style.animation = 'shapeHover 12s ease-in-out infinite';
+              shapes[s].style.opacity = '1';
+            }
+          }, 2800);
+          contactObs.disconnect();
         }
-      }, 100);
-      setTimeout(function () { clearInterval(check); }, 3000);
+      }, { threshold: 0.1 });
+      var contactSec = document.getElementById('contact-section');
+      if (contactSec) contactObs.observe(contactSec);
+      // Pause until in view
+      for (var s = 0; s < shapes.length; s++) {
+        shapes[s].style.animationPlayState = 'paused';
+      }
+    }
+
+    // ---- About word-by-word reveal ----
+    var aboutBody = document.querySelector('.about-body');
+    if (aboutBody) {
+      var text = aboutBody.textContent.trim();
+      aboutBody.innerHTML = '';
+      var chars = [];
+      var allWords = text.split(/\s+/);
+      for (var w = 0; w < allWords.length; w++) {
+        for (var c = 0; c < allWords[w].length; c++) {
+          var span = document.createElement('span');
+          span.className = 'sc';
+          span.textContent = allWords[w][c];
+          aboutBody.appendChild(span);
+          chars.push(span);
+        }
+        if (w < allWords.length - 1) aboutBody.appendChild(document.createTextNode(' '));
+      }
+      var words = chars;
+      var aboutSection = document.getElementById('scene-scroll-text');
+
+      function revealWords() {
+        if (!aboutSection) return;
+        var rect = aboutSection.getBoundingClientRect();
+        var winH = window.innerHeight;
+        if (rect.top >= winH || rect.bottom <= 0) return;
+        var p = (winH - rect.top) / (winH + aboutSection.offsetHeight);
+        p = p < 0 ? 0 : p > 1 ? 1 : p;
+        var adjusted = (p - 0.15) / 0.3;
+        var revealP = adjusted < 0 ? 0 : adjusted > 1 ? 1 : adjusted;
+        var count = Math.floor(revealP * words.length);
+        for (var i = 0; i < words.length; i++) {
+          if (i < count) words[i].classList.add('revealed');
+          else words[i].classList.remove('revealed');
+        }
+      }
+
+      window.addEventListener('scroll', revealWords, { passive: true });
+      if (typeof lenis !== 'undefined') { lenis.on('scroll', revealWords); }
+      else {
+        var chk = setInterval(function () {
+          if (typeof lenis !== 'undefined') { lenis.on('scroll', revealWords); clearInterval(chk); }
+        }, 100);
+        setTimeout(function () { clearInterval(chk); }, 3000);
+      }
+      revealWords();
+    }
+
+    // ---- Results accordion ----
+    var items = document.querySelectorAll('.results-item');
+    var imgs = document.querySelectorAll('.results-image');
+    for (var a = 0; a < items.length; a++) {
+      (function (item) {
+        var header = item.querySelector('.results-item-header');
+        if (!header) return;
+        header.addEventListener('click', function () {
+          var wasActive = item.classList.contains('active');
+          var idx = item.getAttribute('data-results-idx');
+          for (var b = 0; b < items.length; b++) items[b].classList.remove('active');
+          for (var c = 0; c < imgs.length; c++) imgs[c].classList.remove('active');
+          if (!wasActive) {
+            item.classList.add('active');
+            var t = document.querySelector('[data-results-img="' + idx + '"]');
+            if (t) t.classList.add('active');
+          }
+        });
+      })(items[a]);
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();

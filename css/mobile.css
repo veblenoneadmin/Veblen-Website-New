@@ -67,18 +67,27 @@ body {
   display: none !important;
 }
 
-/* ---- CANVAS SEQUENCES — hide heavy desktop canvases ---- */
-#portal-canvas,
-#portal-frame {
-  /* Portal still works but at mobile resolution */
-}
-#scroll-canvas {
-  /* About background canvas stays */
-}
-#zipper-canvas {
-  /* Zipper canvas — mobile-overrides.js handles lighter frames */
+/* ---- PORTAL — shorter on mobile ---- */
+#scene-door-portal {
+  height: 100vh !important;
 }
 
+/* ---- ABOUT — remove gap, no bridge needed ---- */
+#scene-scroll-text {
+  margin-top: 0 !important;
+  padding-top: clamp(80px, 12vh, 140px) !important;
+}
+
+/* ---- HIDE HEAVY DESKTOP ASSETS ---- */
+.spline-canvas,
+.spline-results-canvas,
+.spline-contact-canvas {
+  display: none !important;
+}
+/* Contact floating shapes — too heavy for mobile */
+.contact-shapes {
+  display: none !important;
+}
 /* ---- ABOUT TEXT ---- */
 .scroll-reveal-words {
   font-size: clamp(20px, 6vw, 36px);
@@ -115,10 +124,9 @@ body {
   font-size: 13px;
 }
 
-/* ---- SERVICES TITLE ---- */
-.services-title-wrap {
-  left: 20px;
-  right: 20px;
+/* ---- SERVICES SECTION ---- */
+.services-section {
+  padding: clamp(60px, 8vh, 100px) 20px;
 }
 .services-title-main {
   font-size: clamp(36px, 10vw, 60px);
@@ -128,10 +136,6 @@ body {
 }
 
 /* ---- GROWTH SYSTEM ---- */
-.growth-system-wrap {
-  left: 20px;
-  right: 20px;
-}
 .growth-system-title {
   font-size: clamp(20px, 6vw, 32px);
 }
@@ -143,13 +147,14 @@ body {
 }
 
 /* ---- RESULTS ACCORDION ---- */
-.results-wrap {
-  padding: 0 20px;
+.results-section {
+  padding: clamp(60px, 8vh, 100px) 20px;
+  background: url('../assets/All-bg/results mobile.png') center/100% 100% no-repeat !important;
 }
 .results-content {
   flex-direction: column;
   gap: 24px;
-  padding-top: 10vh;
+  margin-top: 0 !important;
 }
 .results-left {
   flex: 1;
@@ -171,10 +176,6 @@ body {
   max-width: 100%;
 }
 
-/* ---- PRICING & FOOTER SPACING ---- */
-.results-pricing-spacer {
-  height: 450vh;
-}
 /* ---- PRICING ---- */
 .pricing-section {
   padding: clamp(40px, 6vh, 80px) 0;
@@ -188,8 +189,8 @@ body {
   gap: 16px;
 }
 .pricing-card {
-  max-width: 100%;
-  width: 100%;
+  max-width: 320px;
+  width: 90%;
   min-height: auto;
 }
 .pricing-price {
@@ -220,7 +221,7 @@ body {
 
 /* ---- FOOTER ---- */
 #footer {
-  padding: 40px 20px;
+  padding: 40px 20px 120px;
 }
 .footer-globe-wrap {
   width: 280px;

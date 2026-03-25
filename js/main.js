@@ -205,7 +205,7 @@ setTimeout(() => {
       let s1Loaded = 0;
       for (let i = 0; i < S1_TOTAL; i++) {
         const num = String(i).padStart(3, '0');
-        const src = 'assets/sequence-1/s1/open00108' + num + '.jpg';
+        const src = 'assets/sequence-1/s1/open00108' + num + '.webp';
         s1Srcs.push(src);
         const img = new Image();
         img.src = src;
@@ -416,7 +416,7 @@ window.addEventListener('scroll', () => {
   const scrollY = window.scrollY;
 
   // Detect if navbar overlaps any light (cream/white) section
-  const lightSections = document.querySelectorAll('.scene-cream, .scene-about, #scene-intro-strip');
+  const lightSections = document.querySelectorAll('.results-section, .pricing-section');
   const fixedCta = document.querySelector('.fixed-cta');
   const viewH = window.innerHeight;
   let overLight = false;
@@ -433,9 +433,6 @@ window.addEventListener('scroll', () => {
     if (fixedCta && rect.top < viewH - 40 && rect.bottom > viewH - 100) ctaOverLight = true;
   });
 
-  // Also check zipper canvas — light when past frame 900
-  if (window._zipperFrame !== undefined && window._zipperFrame > 900) overLight = true;
-
   // Check if footer is at top of viewport — dark bg, switch back to white
   if (!navbar._footerEl) navbar._footerEl = document.getElementById('footer');
   var onFooter = false;
@@ -449,15 +446,38 @@ window.addEventListener('scroll', () => {
 
   if (!navbar._heroLogo) navbar._heroLogo = document.getElementById('hero-logo');
   if (!navbar._cursorEl) navbar._cursorEl = document.querySelector('.cursor');
+  if (!navbar._scrollHint) navbar._scrollHint = document.querySelector('.hero-scroll-hint');
   var wasLight = navbar.classList.contains('light-mode');
   if (overLight && !wasLight) {
     navbar.classList.add('light-mode');
     if (navbar._heroLogo) navbar._heroLogo.style.color = 'var(--black)';
-    if (navbar._cursorEl) navbar._cursorEl.classList.add('light-mode');
   } else if (!overLight && wasLight) {
     navbar.classList.remove('light-mode');
     if (navbar._heroLogo) navbar._heroLogo.style.color = 'var(--white)';
-    if (navbar._cursorEl) navbar._cursorEl.classList.remove('light-mode');
+  }
+
+  // Cursor & scroll hint — check at center of viewport for faster response
+  var cursorOverLight = false;
+  var hintOverLight = false;
+  var midY = viewH * 0.5;
+  var bottomY = viewH - 40;
+  lightSections.forEach(function(section) {
+    var r = section.getBoundingClientRect();
+    if (r.top < midY && r.bottom > midY) cursorOverLight = true;
+    if (r.top < bottomY && r.bottom > bottomY) hintOverLight = true;
+  });
+  if (navbar._footerEl) {
+    var fr = navbar._footerEl.getBoundingClientRect();
+    if (fr.top < midY && fr.bottom > midY) cursorOverLight = false;
+    if (fr.top < bottomY && fr.bottom > bottomY) hintOverLight = false;
+  }
+  if (navbar._cursorEl) {
+    if (cursorOverLight) navbar._cursorEl.classList.add('light-mode');
+    else navbar._cursorEl.classList.remove('light-mode');
+  }
+  if (navbar._scrollHint) {
+    if (hintOverLight) navbar._scrollHint.classList.add('light-mode');
+    else navbar._scrollHint.classList.remove('light-mode');
   }
 
   if (fixedCta) {
@@ -567,17 +587,17 @@ document.querySelectorAll('[data-scroll-to]').forEach(link => {
     var target = document.getElementById(targetId);
     if (!target) return;
 
-    var scrollP = link.getAttribute('data-scroll-p');
-    if (scrollP) {
-      var p = parseFloat(scrollP);
-      var sectionTop = target.getBoundingClientRect().top + window.scrollY;
-      var sectionH = target.offsetHeight;
-      var scrollTarget = sectionTop + p * sectionH - window.innerHeight;
-      smoothScrollTo(scrollTarget);
-    } else {
-      var elTop = target.getBoundingClientRect().top + window.scrollY;
-      smoothScrollTo(elTop);
+    var elTop = target.getBoundingClientRect().top + window.scrollY;
+    var offset = 0;
+    var isMobile = window.innerWidth <= 900;
+    if (targetId === 'services-section') {
+      offset = isMobile ? window.innerHeight * 0.35 : window.innerHeight * 0.2;
+    } else if (targetId === 'results-section') {
+      offset = isMobile ? -window.innerHeight * 0.25 : window.innerHeight * 0.2;
+    } else if (targetId === 'scene-pricing') {
+      offset = isMobile ? -window.innerHeight * 0.25 : 0;
     }
+    smoothScrollTo(elTop + offset);
   });
 });
 
@@ -797,6 +817,10 @@ function initGlobe() {
 
   // --- ANIMATE ---
   function animate() {
+    if (window._mobileDisableGlobe) {
+      renderer.render(scene, camera);
+      return; // render once, stop loop
+    }
     requestAnimationFrame(animate);
 
     if (!isDragging) { velX *= 0.93; velY *= 0.93; if (Math.abs(velX) < 0.0003) velX += 0.002; }

@@ -87,10 +87,10 @@
   <nav id="navbar">
     <ul class="nav-links">
       <li><a href="#" data-scroll-to="scene-hero" data-text="Home"><span>Home</span></a></li>
-      <li><a href="#" data-scroll-to="scene-scroll-text" data-scroll-p="0.12" data-text="About"><span>About</span></a></li>
-      <li><a href="#" data-scroll-to="scene-scroll-text" data-scroll-p="0.726" data-text="Services"><span>Services</span></a></li>
-      <li><a href="#" data-scroll-to="scene-scroll-text" data-scroll-p="0.95" data-text="Results"><span>Results</span></a></li>
-      <li><a href="#" data-scroll-to="scene-scroll-text" data-scroll-p="1.05" data-text="Pricing"><span>Pricing</span></a></li>
+      <li><a href="#" data-scroll-to="scene-scroll-text" data-text="About"><span>About</span></a></li>
+      <li><a href="#" data-scroll-to="services-section" data-text="Services"><span>Services</span></a></li>
+      <li><a href="#" data-scroll-to="results-section" data-text="Results"><span>Results</span></a></li>
+      <li><a href="#" data-scroll-to="scene-pricing" data-text="Pricing"><span>Pricing</span></a></li>
     </ul>
 
     <!-- Logo: starts centred, moves into navbar on scroll -->
@@ -110,10 +110,10 @@
     <div class="mobile-menu" id="mobile-menu">
       <ul class="mobile-menu-links">
         <li><a href="#" data-scroll-to="scene-hero">Home</a></li>
-        <li><a href="#" data-scroll-to="scene-scroll-text" data-scroll-p="0.12">About</a></li>
-        <li><a href="#" data-scroll-to="scene-scroll-text" data-scroll-p="0.726">Services</a></li>
-        <li><a href="#" data-scroll-to="scene-scroll-text" data-scroll-p="0.95">Results</a></li>
-        <li><a href="#" data-scroll-to="scene-scroll-text" data-scroll-p="1.10">Pricing</a></li>
+        <li><a href="#" data-scroll-to="scene-scroll-text">About</a></li>
+        <li><a href="#" data-scroll-to="services-section">Services</a></li>
+        <li><a href="#" data-scroll-to="results-section">Results</a></li>
+        <li><a href="#" data-scroll-to="scene-pricing">Pricing</a></li>
       </ul>
       <div class="mobile-menu-contact">
         <a href="tel:+61417111117">+61 417 111 117</a>
@@ -195,17 +195,15 @@
   <canvas id="portal-canvas"></canvas>
 
     <!-- ==========================================
-         SCENE — SCROLL TEXT (sequence-4 background)
+         ABOUT / SERVICES / RESULTS / PRICING
          ========================================== -->
-    <section id="scene-scroll-text"></section>
 
-  <!-- Fixed fullscreen canvas for scroll sequence -->
-  <canvas id="scroll-canvas"></canvas>
-
-  <!-- Fixed scroll-reveal text -->
-  <div class="scroll-reveal-text" id="scroll-reveal-text">
-    <div class="scroll-reveal-inner" id="scroll-reveal-inner">
-      <p class="scroll-reveal-words">Veblen Group is an award-winning growth agency built for brands in Trade, Construction, Civil, Real Estate, B2C, B2B and beyond. From systemised content and full-funnel ads to CRM automation and sales infrastructure, we've helped clients scale from $500K to $3-6M+, achieve 30x ROAS, and lift profitability to 20% in as little as 90 days.</p>
+  <img src="assets/sequence-2/door3/inside00109174.webp" class="portal-bridge" alt="" />
+  <div id="content-reveal">
+  <!-- ABOUT SECTION -->
+  <section id="scene-scroll-text">
+    <div class="about-content">
+      <p class="about-body">Veblen Group is an award-winning growth agency built for brands in Trade, Construction, Civil, Real Estate, B2C, B2B and beyond. From systemised content and full-funnel ads to CRM automation and sales infrastructure, we've helped clients scale from $500K to $3-6M+, achieve 30x ROAS, and lift profitability to 20% in as little as 90 days.</p>
 
       <div class="scroll-features">
         <div class="scroll-features-left">
@@ -234,65 +232,88 @@
           </div>
         </div>
       </div>
-
     </div>
-  </div>
+  </section>
 
-  <!-- SERVICES — Split Title (own fixed overlay, independent scroll logic) -->
-  <div class="services-title-wrap" id="services-title-wrap">
-    <div class="services-hero" id="services-hero">
+  <!-- SERVICES SECTION -->
+  <section class="services-section" id="services-section">
+    <canvas id="spline-canvas" class="spline-canvas"></canvas>
+    <div class="services-hero">
       <div class="services-title-left">
         <h2 class="services-title-main">Built to</h2>
-        <p class="services-title-sub">Set the standard.</p>
       </div>
       <div class="services-title-right">
         <h2 class="services-title-main">Dominate</h2>
       </div>
     </div>
-  </div>
-
-  <!-- Fixed fullscreen canvas for zipper sequence (transparent, above scroll-canvas) -->
-  <canvas id="zipper-canvas"></canvas>
-
-  <!-- GROWTH SYSTEM — Fixed overlay text (appears after "Built to / Dominate") -->
-  <div class="growth-system-wrap" id="growth-system-wrap">
-    <div class="growth-system-content" id="growth-system-content">
-      <div class="growth-system-header">
-        <span class="growth-system-label">Veblen</span>
-        <h2 class="growth-system-title">GROWTH SYSTEM</h2>
+    <div class="services-layout">
+      <div class="services-left">
+        <div class="growth-system-content">
+          <div class="growth-system-header">
+            <span class="growth-system-label">Veblen</span>
+            <h2 class="growth-system-title">GROWTH SYSTEM</h2>
+          </div>
+          <div class="growth-system-stages">
+            <div class="growth-stage">
+              <h3>STAGE 01 — AUDIT</h3>
+              <p>Find where revenue is being lost.</p>
+            </div>
+            <div class="growth-stage">
+              <h3>STAGE 02 — STRATEGY</h3>
+              <p>Map your 12-month growth plan.</p>
+            </div>
+            <div class="growth-stage">
+              <h3>STAGE 03 — BUILD</h3>
+              <p>Install the infrastructure before a dollar goes live.</p>
+            </div>
+            <div class="growth-stage">
+              <h3>STAGE 04 — LAUNCH & MEASURE</h3>
+              <p>Every dollar tracked. Weekly reviews. Full accountability.</p>
+            </div>
+            <div class="growth-stage">
+              <h3>STAGE 05 — COMPOUND</h3>
+              <p>Systems optimise. Results stack. Growth becomes predictable.</p>
+            </div>
+          </div>
+          <div class="growth-system-results">
+            <span class="growth-results-label">CLIENTS SCALED | ROAS ACHIEVED</span>
+            <p>This system has helped clients scale from $1M to $3-6M+ and achieve up to 30x ROAS.</p>
+          </div>
+        </div>
       </div>
-      <div class="growth-system-stages">
-        <div class="growth-stage">
-          <h3>STAGE 01 — AUDIT</h3>
-          <p>Find where revenue is being lost.</p>
-        </div>
-        <div class="growth-stage">
-          <h3>STAGE 02 — STRATEGY</h3>
-          <p>Map your 12-month growth plan.</p>
-        </div>
-        <div class="growth-stage">
-          <h3>STAGE 03 — BUILD</h3>
-          <p>Install the infrastructure before a dollar goes live.</p>
-        </div>
-        <div class="growth-stage">
-          <h3>STAGE 04 — LAUNCH & MEASURE</h3>
-          <p>Every dollar tracked. Weekly reviews. Full accountability.</p>
-        </div>
-        <div class="growth-stage">
-          <h3>STAGE 05 — COMPOUND</h3>
-          <p>Systems optimise. Results stack. Growth becomes predictable.</p>
-        </div>
-      </div>
-      <div class="growth-system-results">
-        <span class="growth-results-label">CLIENTS SCALED | ROAS ACHIEVED</span>
-        <p>This system has helped clients scale from $1M to $3-6M+ and achieve up to 30x ROAS.</p>
+      <div class="services-right">
+        <ul class="services-list">
+          <div class="services-scroll-inner">
+            <li>Content Production</li>
+            <li>Google Ads</li>
+            <li>SEO & Local Dominance</li>
+            <li>Brand Identity</li>
+            <li>Social Media Management</li>
+            <li>Website Design & Build</li>
+            <li>Lead Generation</li>
+            <li>Video & Photography</li>
+            <li>Marketing Automation</li>
+            <li>Strategy & Consulting</li>
+            <li>Content Production</li>
+            <li>Google Ads</li>
+            <li>SEO & Local Dominance</li>
+            <li>Brand Identity</li>
+            <li>Social Media Management</li>
+            <li>Website Design & Build</li>
+            <li>Lead Generation</li>
+            <li>Video & Photography</li>
+            <li>Marketing Automation</li>
+            <li>Strategy & Consulting</li>
+          </div>
+        </ul>
+        <p class="services-title-sub">Set the standard.</p>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- RESULTS — Fixed overlay, JeskoJets accordion style -->
-  <div class="results-wrap" id="results-wrap">
-    <div class="results-content" id="results-content">
+  <!-- RESULTS SECTION — normal scroll -->
+  <section class="results-section" id="results-section">
+    <div class="results-content">
       <div class="results-left">
         <span class="results-eyebrow">A BETTER WAY TO GROW</span>
         <div class="results-accordion">
@@ -335,97 +356,105 @@
         </div>
       </div>
       <div class="results-right">
-        <div class="results-image-wrap">
-          <img class="results-image active" data-results-img="0" src="assets/result-pic/1.paid advertising.png" alt="Paid Advertising" />
-          <img class="results-image" data-results-img="1" src="assets/result-pic/2.content production.png" alt="Content Production" />
-          <img class="results-image" data-results-img="2" src="assets/result-pic/3.crm & automation.jpeg" alt="CRM & Automation" />
-          <img class="results-image" data-results-img="3" src="assets/result-pic/4.strategy and scale.jpeg" alt="Strategy & Scale" />
-        </div>
+        <canvas id="spline-results-canvas" class="spline-results-canvas"></canvas>
       </div>
 
-      <!-- PRICING — inside results overlay -->
-      <div class="pricing-section" id="scene-pricing">
-        <span class="pricing-eyebrow">PRICING</span>
-        <h2 class="pricing-headline">Choose Your<br>Growth Speed.</h2>
-        <p class="pricing-sub">How fast do you want to grow?</p>
-        <div class="pricing-grid">
-          <div class="pricing-card">
-            <div class="pricing-icon pricing-icon--green"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 14h6l-2 8 10-12h-6l2-8z" fill="currentColor"/></svg></div>
-            <h3 class="pricing-tier">LAUNCH</h3>
-            <p class="pricing-desc">Single Service — For businesses ready to fix one thing properly.</p>
-            <span class="pricing-price">From $5,000<span class="pricing-mo">/mo</span></span>
-            <p class="pricing-body">Pick your priority — content, ads, or SEO — and we'll build the engine for that channel. No half-measures. Full strategy, full execution, full reporting.</p>
-            <span class="pricing-includes">INCLUDES</span>
-            <ul class="pricing-features">
-              <li><span class="pricing-check pricing-check--green">✓</span>Choose one: Content (6 cinema-grade videos/month + photos), OR Ads (Meta OR Google), OR SEO campaign</li>
-              <li><span class="pricing-check pricing-check--green">✓</span>Dedicated strategist</li>
-              <li><span class="pricing-check pricing-check--green">✓</span>Fortnightly performance reports</li>
-              <li><span class="pricing-check pricing-check--green">✓</span>CRM setup & lead tracking</li>
-              <li><span class="pricing-check pricing-check--green">✓</span>Direct founder access</li>
-            </ul>
-            <a href="#" class="pricing-cta pricing-cta--outline" id="pricing-cta-1">Book A Strategy Call</a>
-          </div>
-          <div class="pricing-card pricing-card--featured">
-            <span class="pricing-popular-pill">MOST POPULAR</span>
-            <div class="pricing-icon pricing-icon--accent"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M2 19h20v2H2v-2zm2-2h16l-2-8-4 4-4-6-4 6-4-4 2 8z" fill="currentColor"/></svg></div>
-            <h3 class="pricing-tier">GROWTH ENGINE</h3>
-            <p class="pricing-desc">Everything you need to scale from $1M to $3M+.</p>
-            <span class="pricing-price">$10,000<span class="pricing-mo">/mo</span></span>
-            <p class="pricing-body">Content, ads, CRM, and a conversion-optimised website — built as one integrated system. This is the package that 3x'd a client's business in 6 months.</p>
-            <span class="pricing-includes">INCLUDES</span>
-            <ul class="pricing-features">
-              <li><span class="pricing-check pricing-check--accent">✓</span>6 cinema-grade videos/month + photo shoots</li>
-              <li><span class="pricing-check pricing-check--accent">✓</span>Meta + Google Ads management</li>
-              <li><span class="pricing-check pricing-check--accent">✓</span>Conversion-optimised website (included on 12-month partnership)</li>
-              <li><span class="pricing-check pricing-check--accent">✓</span>Full CRM + automation + AI follow-up</li>
-              <li><span class="pricing-check pricing-check--accent">✓</span>Weekly strategy calls, daily reporting</li>
-              <li><span class="pricing-check pricing-check--accent">✓</span>Performance guarantee</li>
-            </ul>
-            <a href="#" class="pricing-cta pricing-cta--filled" id="pricing-cta-2">Lock In Your Growth Engine</a>
-          </div>
-          <div class="pricing-card">
-            <div class="pricing-icon pricing-icon--gradient"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="currentColor"/></svg></div>
-            <h3 class="pricing-tier">YOUR MARKETING TEAM</h3>
-            <p class="pricing-desc">Replace your entire marketing department. For $1M–$5M+ businesses.</p>
-            <span class="pricing-price">$44,000<span class="pricing-mo">/mo</span></span>
-            <p class="pricing-body">A complete marketing team embedded in your business. Strategy, content, ads, web, CRM, reporting, creative direction — everything. You focus on running the business. We handle everything else.</p>
-            <span class="pricing-includes">INCLUDES</span>
-            <ul class="pricing-features">
-              <li><span class="pricing-check pricing-check--gradient">✓</span>Everything in Growth Engine, plus:</li>
-              <li><span class="pricing-check pricing-check--gradient">✓</span>Dedicated creative director</li>
-              <li><span class="pricing-check pricing-check--gradient">✓</span>Unlimited content requests</li>
-              <li><span class="pricing-check pricing-check--gradient">✓</span>Priority 24/7 support</li>
-              <li><span class="pricing-check pricing-check--gradient">✓</span>Quarterly growth workshops</li>
-              <li><span class="pricing-check pricing-check--gradient">✓</span>Custom reporting dashboards</li>
-              <li><span class="pricing-check pricing-check--gradient">✓</span>Talent recruitment via TalentPort</li>
-              <li><span class="pricing-check pricing-check--gradient">✓</span>Multi-platform advertising</li>
-              <li><span class="pricing-check pricing-check--gradient">✓</span>Advanced CRO & A/B testing</li>
-            </ul>
-            <a href="#" class="pricing-cta pricing-cta--gradient" id="pricing-cta-3">Build Your Marketing Team</a>
-          </div>
-        </div>
+    </div>
+  </section>
+
+  <!-- PRICING SECTION -->
+  <section class="pricing-section" id="scene-pricing">
+    <span class="pricing-eyebrow">PRICING</span>
+    <h2 class="pricing-headline">Choose Your<br>Growth Speed.</h2>
+    <p class="pricing-sub">How fast do you want to grow?</p>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pricing-icon pricing-icon--green"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 14h6l-2 8 10-12h-6l2-8z" fill="currentColor"/></svg></div>
+        <h3 class="pricing-tier">LAUNCH</h3>
+        <p class="pricing-desc">Single Service — For businesses ready to fix one thing properly.</p>
+        <span class="pricing-price">From $5,000<span class="pricing-mo">/mo</span></span>
+        <p class="pricing-body">Pick your priority — content, ads, or SEO — and we'll build the engine for that channel. No half-measures. Full strategy, full execution, full reporting.</p>
+        <span class="pricing-includes">INCLUDES</span>
+        <ul class="pricing-features">
+          <li><span class="pricing-check pricing-check--green">✓</span>Choose one: Content (6 cinema-grade videos/month + photos), OR Ads (Meta OR Google), OR SEO campaign</li>
+          <li><span class="pricing-check pricing-check--green">✓</span>Dedicated strategist</li>
+          <li><span class="pricing-check pricing-check--green">✓</span>Fortnightly performance reports</li>
+          <li><span class="pricing-check pricing-check--green">✓</span>CRM setup & lead tracking</li>
+          <li><span class="pricing-check pricing-check--green">✓</span>Direct founder access</li>
+        </ul>
+        <a href="#" class="pricing-cta pricing-cta--outline" id="pricing-cta-1">Book A Strategy Call</a>
+      </div>
+      <div class="pricing-card pricing-card--featured">
+        <span class="pricing-popular-pill">MOST POPULAR</span>
+        <div class="pricing-icon pricing-icon--accent"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M2 19h20v2H2v-2zm2-2h16l-2-8-4 4-4-6-4 6-4-4 2 8z" fill="currentColor"/></svg></div>
+        <h3 class="pricing-tier">GROWTH ENGINE</h3>
+        <p class="pricing-desc">Everything you need to scale from $1M to $3M+.</p>
+        <span class="pricing-price">$10,000<span class="pricing-mo">/mo</span></span>
+        <p class="pricing-body">Content, ads, CRM, and a conversion-optimised website — built as one integrated system. This is the package that 3x'd a client's business in 6 months.</p>
+        <span class="pricing-includes">INCLUDES</span>
+        <ul class="pricing-features">
+          <li><span class="pricing-check pricing-check--accent">✓</span>6 cinema-grade videos/month + photo shoots</li>
+          <li><span class="pricing-check pricing-check--accent">✓</span>Meta + Google Ads management</li>
+          <li><span class="pricing-check pricing-check--accent">✓</span>Conversion-optimised website (included on 12-month partnership)</li>
+          <li><span class="pricing-check pricing-check--accent">✓</span>Full CRM + automation + AI follow-up</li>
+          <li><span class="pricing-check pricing-check--accent">✓</span>Weekly strategy calls, daily reporting</li>
+          <li><span class="pricing-check pricing-check--accent">✓</span>Performance guarantee</li>
+        </ul>
+        <a href="#" class="pricing-cta pricing-cta--filled" id="pricing-cta-2">Lock In Your Growth Engine</a>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-icon pricing-icon--gradient"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="currentColor"/></svg></div>
+        <h3 class="pricing-tier">YOUR MARKETING TEAM</h3>
+        <p class="pricing-desc">Replace your entire marketing department. For $1M–$5M+ businesses.</p>
+        <span class="pricing-price">$44,000<span class="pricing-mo">/mo</span></span>
+        <p class="pricing-body">A complete marketing team embedded in your business. Strategy, content, ads, web, CRM, reporting, creative direction — everything. You focus on running the business. We handle everything else.</p>
+        <span class="pricing-includes">INCLUDES</span>
+        <ul class="pricing-features">
+          <li><span class="pricing-check pricing-check--gradient">✓</span>Everything in Growth Engine, plus:</li>
+          <li><span class="pricing-check pricing-check--gradient">✓</span>Dedicated creative director</li>
+          <li><span class="pricing-check pricing-check--gradient">✓</span>Unlimited content requests</li>
+          <li><span class="pricing-check pricing-check--gradient">✓</span>Priority 24/7 support</li>
+          <li><span class="pricing-check pricing-check--gradient">✓</span>Quarterly growth workshops</li>
+          <li><span class="pricing-check pricing-check--gradient">✓</span>Custom reporting dashboards</li>
+          <li><span class="pricing-check pricing-check--gradient">✓</span>Talent recruitment via TalentPort</li>
+          <li><span class="pricing-check pricing-check--gradient">✓</span>Multi-platform advertising</li>
+          <li><span class="pricing-check pricing-check--gradient">✓</span>Advanced CRO & A/B testing</li>
+        </ul>
+        <a href="#" class="pricing-cta pricing-cta--gradient" id="pricing-cta-3">Build Your Marketing Team</a>
       </div>
     </div>
-  </div>
-
-    <!-- Spacer for results/pricing to scroll through before footer -->
-    <div class="results-pricing-spacer"></div>
+  </section>
 
     <!-- ==========================================
-         FOOTER
-         Contact + Globe + GLOBAL text
+         CONTACT — Full screen dedicated section
          ========================================== -->
-    <footer id="footer">
-      <!-- Contact section -->
-      <div class="footer-contact-section">
-        <span class="contact-eyebrow">READY TO SCALE?</span>
-        <h2 class="contact-headline">Let's build something<br><span class="contact-headline-bold">they can't ignore.</span></h2>
+    <section class="contact-section" id="contact-section">
+      <div class="contact-bg-gradient"></div>
+      <div class="contact-shapes">
+        <div class="elegant-shape shape-1"></div>
+        <div class="elegant-shape shape-2"></div>
+        <div class="elegant-shape shape-3"></div>
+        <div class="elegant-shape shape-4"></div>
+        <div class="elegant-shape shape-5"></div>
+      </div>
+      <div class="contact-section-inner">
+        <div class="contact-badge"><span class="contact-badge-dot"></span> READY TO SCALE?</div>
+        <h2 class="contact-headline">Let's build something</h2>
+        <h2 class="contact-headline-bold">they can't ignore.</h2>
         <p class="contact-sub">Book your strategy session. Zero obligation. We'll tell you exactly what's holding you back.</p>
         <div class="contact-buttons">
           <a href="#" class="contact-btn contact-btn--primary" id="open-contact-main">BOOK A STRATEGY SESSION <span class="contact-btn-icon">→</span></a>
           <a href="tel:+61417111117" class="contact-btn contact-btn--secondary">CALL +61 417 111 117</a>
         </div>
       </div>
+      <div class="contact-fade-overlay"></div>
+    </section>
+
+    <!-- ==========================================
+         FOOTER
+         Globe + GLOBAL text + links
+         ========================================== -->
+    <footer id="footer">
       <!-- Giant "GLOBAL" text behind globe -->
       <div class="footer-global-text">GLOBAL</div>
 
@@ -464,6 +493,7 @@
         <span class="footer-copy">Brisbane, Australia</span>
       </div>
     </footer>
+  </div><!-- /content-reveal -->
 
   </main><!-- /scroll-wrapper -->
 
@@ -471,7 +501,49 @@
   <script src="js/main.js"></script>
   <script src="js/portal-sequence.js"></script>
   <script src="js/scroll-sequence.js"></script>
-  <script src="js/zipper-sequence.js"></script>
+  <script type="module">
+    if (window.innerWidth <= 900) { /* Skip Spline on mobile */ } else {
+    import('https://unpkg.com/@splinetool/runtime@1.9.48/build/runtime.js').then(({ Application }) => {
+    const canvas = document.getElementById('spline-canvas');
+    const section = document.getElementById('services-section');
+    if (canvas && section) {
+      function loadSpline() {
+        const app = new Application(canvas);
+        app.load('assets/scene.splinecode').then(() => {
+          app.setBackgroundColor('rgba(0,0,0,0)');
+          // Zoom camera in 2x
+          const cam = app.findObjectByType('PerspectiveCamera') || app.findObjectByType('OrthographicCamera');
+          if (cam) {
+            cam.position.z = cam.position.z * 0.5;
+          }
+        });
+      }
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(loadSpline, { timeout: 3000 });
+      } else {
+        setTimeout(loadSpline, 3000);
+      }
+    }
+
+    // Results Spline
+    const resultsCanvas = document.getElementById('spline-results-canvas');
+    if (resultsCanvas) {
+      function loadResultsSpline() {
+        const app3 = new Application(resultsCanvas);
+        app3.load('assets/scene (3).splinecode').then(() => {
+          app3.setBackgroundColor('rgba(0,0,0,0)');
+        });
+      }
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(loadResultsSpline, { timeout: 4000 });
+      } else {
+        setTimeout(loadResultsSpline, 4000);
+      }
+    }
+
+    }); // end import then
+    } // end desktop check
+  </script>
   <script src="js/mobile-overrides.js"></script>
 </body>
 
