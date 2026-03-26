@@ -106,6 +106,9 @@ body {
 .scroll-features-left {
   gap: 16px;
 }
+.scroll-features-award {
+  display: none;
+}
 .scroll-features-logo {
   width: 60px;
 }

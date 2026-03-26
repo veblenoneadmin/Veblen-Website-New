@@ -1,5 +1,6 @@
 (function () {
-  var TOTAL = 1001, images = [], loaded = 0, ready = false, current = -1;
+  var isMobileDevice = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
+  var TOTAL = isMobileDevice ? 751 : 1001, images = [], loaded = 0, ready = false, current = -1;
   var frameEl, canvas, ctx, W, H;
   var visible = false;
   var canvasVisible = false;
@@ -208,9 +209,14 @@
     // Preload all frames as Image objects
     for (var i = 0; i < TOTAL; i++) {
       (function (idx) {
-        var num = 8174 + idx;
         var img = new Image();
-        img.src = 'assets/sequence-2/door3/inside0010' + num + '.webp';
+        if (isMobileDevice) {
+          var num = String(30 + idx).padStart(4, '0');
+          img.src = 'assets/door.mobile/' + num + '.webp';
+        } else {
+          var num = 8174 + idx;
+          img.src = 'assets/sequence-2/door3/inside0010' + num + '.webp';
+        }
         img.onload = function () {
           if (++loaded === TOTAL) { ready = true; updateTarget(); }
         };

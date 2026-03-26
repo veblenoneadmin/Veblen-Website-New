@@ -204,8 +204,10 @@ setTimeout(() => {
       const s1Srcs = [];
       let s1Loaded = 0;
       for (let i = 0; i < S1_TOTAL; i++) {
-        const num = String(i).padStart(3, '0');
-        const src = 'assets/sequence-1/s1/open00108' + num + '.webp';
+        const num = String(i + 1).padStart(4, '0');
+        const src = isTouchDevice
+          ? 'assets/door.open.mobile/' + num + '.webp'
+          : 'assets/sequence-1/s1/open00108' + String(i).padStart(3, '0') + '.webp';
         s1Srcs.push(src);
         const img = new Image();
         img.src = src;
@@ -416,7 +418,7 @@ window.addEventListener('scroll', () => {
   const scrollY = window.scrollY;
 
   // Detect if navbar overlaps any light (cream/white) section
-  const lightSections = document.querySelectorAll('.results-section, .pricing-section');
+  const lightSections = document.querySelectorAll('#scene-scroll-text, .results-section, .pricing-section');
   const fixedCta = document.querySelector('.fixed-cta');
   const viewH = window.innerHeight;
   let overLight = false;

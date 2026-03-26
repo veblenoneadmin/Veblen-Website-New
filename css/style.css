@@ -1246,7 +1246,7 @@ body::after {
   position: relative;
   z-index: 1;
   padding: clamp(150px, 18vh, 280px) clamp(32px, 6vw, 100px);
-  background: url('../assets/All-bg/Results.webp') center/100% 100% no-repeat;
+  background: url('../assets/All-bg/new-results.webp') center/100% 100% no-repeat;
 }
 .results-wrap {
 }
@@ -1384,6 +1384,63 @@ body::after {
   opacity: 1;
   transform: scale(1);
   clip-path: inset(0% 0% 0% 0% round 16px);
+}
+
+/* ---- LOGO MARQUEE SECTION ---- */
+.logo-marquee-section {
+  position: relative;
+  z-index: 2;
+  padding: clamp(40px, 6vh, 80px) 0;
+  text-align: center;
+  background: transparent;
+}
+.logo-marquee-heading {
+  font-family: 'Keep Calm', sans-serif;
+  font-size: clamp(25px, 3.5vw, 45px);
+  font-weight: 400;
+  color: #000;
+  margin: 0 0 20px;
+  letter-spacing: 0.02em;
+}
+.logo-marquee-heading span {
+  color: #f57c00;
+  font-weight: 600;
+}
+.logo-marquee-divider {
+  max-width: 400px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
+  margin: 0 auto;
+}
+.logo-marquee-wrapper {
+  overflow: hidden;
+  padding: 24px 0;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+.logo-marquee-track {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  width: max-content;
+  animation: marquee-scroll 80s linear infinite;
+}
+.logo-marquee-track img {
+  height: clamp(36px, 4.5vw, 56px);
+  width: auto;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+  filter: brightness(0);
+}
+.logo-marquee-track img:hover {
+  opacity: 1;
+}
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-50% - 24px)); }
 }
 
 /* ---- PRICING SECTION (inside results overlay) ---- */
@@ -2309,6 +2366,13 @@ body::after {
   display: flex;
   align-items: flex-start;
   gap: clamp(20px, 2.5vw, 36px);
+  flex-wrap: wrap;
+}
+.scroll-features-award {
+  width: 100%;
+  max-width: clamp(277px, 31vw, 462px);
+  height: auto;
+  margin-top: clamp(16px, 2vh, 32px);
 }
 .scroll-features-logo {
   width: clamp(80px, 9vw, 140px);
@@ -2360,9 +2424,9 @@ body::after {
 }
 .scroll-feature-card p {
   font-family: var(--font-body);
-  font-size: clamp(12px, 1.1vw, 16px);
-  font-weight: 300;
-  color: rgba(0,0,0,0.5);
+  font-size: clamp(14px, 1.3vw, 19px);
+  font-weight: 600;
+  color: rgba(0,0,0,0.6);
   line-height: 1.7;
   margin: 0;
 }
@@ -2617,7 +2681,7 @@ body::after {
   backdrop-filter: blur(2px);
   box-shadow: 0 8px 32px rgba(255,255,255,0.1);
   opacity: 0;
-  animation: shapeEntry 2.4s cubic-bezier(0.23, 0.86, 0.39, 0.96) forwards;
+  animation: shapeEntry 2.4s cubic-bezier(0.23, 0.86, 0.39, 0.96) forwards, shapeHover 6s ease-in-out 2.4s infinite;
 }
 .elegant-shape::after {
   content: '';
@@ -2675,11 +2739,11 @@ body::after {
   0% { opacity: 0; transform: translateY(-150px) rotate(var(--r, 0deg)); }
   100% { opacity: 1; transform: translateY(0) rotate(var(--r, 0deg)); }
 }
-.shape-1 { --r: 12deg; animation-name: shapeFloat1; }
-.shape-2 { --r: -15deg; animation-name: shapeFloat2; }
-.shape-3 { --r: -8deg; animation-name: shapeFloat3; }
-.shape-4 { --r: 20deg; animation-name: shapeFloat4; }
-.shape-5 { --r: -25deg; animation-name: shapeFloat5; }
+.shape-1 { --r: 12deg; animation: shapeFloat1 2.4s cubic-bezier(0.23, 0.86, 0.39, 0.96) forwards, shapeHover 7s ease-in-out 2.7s infinite; }
+.shape-2 { --r: -15deg; animation: shapeFloat2 2.4s cubic-bezier(0.23, 0.86, 0.39, 0.96) forwards, shapeHover 9s ease-in-out 2.9s infinite; }
+.shape-3 { --r: -8deg; animation: shapeFloat3 2.4s cubic-bezier(0.23, 0.86, 0.39, 0.96) forwards, shapeHover 8s ease-in-out 2.8s infinite; }
+.shape-4 { --r: 20deg; animation: shapeFloat4 2.4s cubic-bezier(0.23, 0.86, 0.39, 0.96) forwards, shapeHover 6s ease-in-out 3s infinite; }
+.shape-5 { --r: -25deg; animation: shapeFloat5 2.4s cubic-bezier(0.23, 0.86, 0.39, 0.96) forwards, shapeHover 10s ease-in-out 3.1s infinite; }
 @keyframes shapeFloat1 {
   0% { opacity: 0; transform: translateY(-150px) rotate(-3deg); }
   40% { opacity: 1; transform: translateY(0) rotate(12deg); }
@@ -2706,8 +2770,8 @@ body::after {
   100% { opacity: 1; transform: translateY(0) rotate(-25deg); }
 }
 @keyframes shapeHover {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(15px); }
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(20px) rotate(var(--r, 0deg)); }
 }
 .contact-fade-overlay {
   position: absolute;
