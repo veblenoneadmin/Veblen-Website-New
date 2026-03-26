@@ -16,8 +16,10 @@ function smoothScrollTo(targetPos) {
   }
 }
 
-/* ---- BACKGROUND AUDIO ---- */
+/* ---- BACKGROUND AUDIO (desktop only) ---- */
 (function initBgAudio() {
+  const isMobileAudio = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
+  if (isMobileAudio) return;
   const audio = document.getElementById('bg-audio');
   const btn = document.getElementById('sound-toggle');
   if (!audio) return;
