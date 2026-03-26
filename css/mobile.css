@@ -128,6 +128,9 @@ body {
 .services-section {
   padding: clamp(60px, 8vh, 100px) 20px;
 }
+.services-arrow {
+  display: none;
+}
 .services-title-main {
   font-size: clamp(36px, 10vw, 60px);
 }

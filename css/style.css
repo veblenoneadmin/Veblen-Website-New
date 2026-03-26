@@ -2386,6 +2386,34 @@ body::after {
   z-index: 2;
   pointer-events: none;
 }
+/* White connecting arrow between "Built to" and "Dominate" — desktop only */
+.services-hero {
+  gap: 0;
+}
+.services-arrow {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin: 0 clamp(8px, 2vw, 30px);
+  transform: translateY(-0.45em);
+}
+.services-arrow::before {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: #fff;
+}
+.services-arrow::after {
+  content: '';
+  width: clamp(8px, 1vw, 14px);
+  height: clamp(8px, 1vw, 14px);
+  border-top: 2px solid #fff;
+  border-right: 2px solid #fff;
+  transform: rotate(45deg);
+  margin-left: -clamp(6px, 0.8vw, 10px);
+  flex-shrink: 0;
+}
 .services-title-left {
   display: flex;
   flex-direction: column;
